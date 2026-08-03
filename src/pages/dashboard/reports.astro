@@ -1,0 +1,14 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import ReportsView from '../../components/features/reports/ReportsView.astro';
+---
+
+<DashboardLayout title="Reports">
+  <section class="space-y-6">
+    <header>
+      <h2 class="text-2xl font-bold text-text-main">Practice Analytics & Reports</h2>
+      <p class="text-sm text-text-muted mt-1">Review session counts, revenue metrics, and patient frequency</p>
+    </header>
+    <ReportsView />
+  </section>
+</DashboardLayout>
