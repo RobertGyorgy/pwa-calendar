@@ -1,4 +1,10 @@
 ---
+interface Props {
+  name?: string;
+}
+
+const { name = "Dr. Maria" } = Astro.props;
+
 const days = [
   { day: 'M', date: 7, active: false },
   { day: 'T', date: 8, active: false },
@@ -10,38 +16,32 @@ const days = [
 ];
 ---
 
-<div class="bg-surface-card rounded-3xl py-6 px-5 shadow-sm border border-border-subtle">
-  <!-- Month Selector & Header Actions -->
+<div class="bg-surface-card rounded-3xl p-6 shadow-sm">
+  <!-- Greeting Header & Action -->
   <div class="flex items-center justify-between mb-8">
-    <div class="flex items-center gap-2 cursor-pointer">
-      <h2 class="text-3xl font-semibold tracking-tight text-text-main">Jun</h2>
-      <span class="text-text-muted text-base">▾</span>
-    </div>
-    <div class="flex items-center gap-2">
-      <button aria-label="Search" class="w-11 h-11 rounded-full bg-surface-panel flex items-center justify-center text-text-main active:scale-95 transition-transform">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-      </button>
-      <button aria-label="Add appointment" class="w-11 h-11 rounded-full bg-text-main text-surface-card flex items-center justify-center text-xl font-medium active:scale-95 transition-transform">
-        +
-      </button>
-    </div>
+    <h2 class="text-3xl font-semibold tracking-tight text-text-main">Hello, {name}</h2>
+    
+    <button aria-label="Add appointment" class="w-11 h-11 rounded-full bg-text-main text-surface-card flex items-center justify-center text-xl font-medium active:scale-95 transition-transform shrink-0">
+      +
+    </button>
   </div>
 
-  <!-- Large Roomy Horizontal Day Strip -->
+  <!-- Vertical Capsule Calendar Strip -->
   <div class="grid grid-cols-7 gap-1 text-center">
     {days.map((item) => (
-      <div class="flex flex-col items-center gap-3">
-        <span class="text-xs font-medium text-text-muted">{item.day}</span>
-        <button
-          class={`w-11 h-11 rounded-full flex items-center justify-center text-base font-medium transition-all ${
-            item.active
-              ? 'bg-text-main text-surface-card shadow-md scale-105 font-semibold'
-              : 'text-text-main hover:bg-surface-panel'
-          }`}
-        >
-          {item.date}
+      item.active ? (
+        <button class="flex flex-col items-center justify-between rounded-full py-2 px-1 bg-amber-400 text-white active:scale-95 transition-transform shadow-md h-20">
+          <span class="text-xs font-medium mt-1">{item.day}</span>
+          <span class="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center text-base font-semibold">
+            {item.date}
+          </span>
         </button>
-      </div>
+      ) : (
+        <button class="flex flex-col items-center justify-between rounded-full py-2 px-1 text-text-main hover:bg-surface-panel active:scale-95 transition-transform h-20">
+          <span class="text-xs font-medium text-text-muted mt-1">{item.day}</span>
+          <span class="text-base font-medium mb-1.5">{item.date}</span>
+        </button>
+      )
     ))}
   </div>
 </div>
