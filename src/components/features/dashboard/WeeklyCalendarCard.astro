@@ -1,0 +1,50 @@
+---
+const days = [
+  { day: 'M', date: 7, active: false },
+  { day: 'T', date: 8, active: false },
+  { day: 'W', date: 9, active: true },
+  { day: 'T', date: 10, active: false },
+  { day: 'F', date: 11, active: false },
+  { day: 'S', date: 12, active: false },
+  { day: 'S', date: 13, active: false },
+];
+---
+
+<div class="bg-surface-card border border-border-subtle rounded-3xl p-6 shadow-sm">
+  <!-- Month Selector & Actions Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-2 cursor-pointer">
+      <h2 class="text-2xl font-bold text-text-main">Jun</h2>
+      <span class="text-text-muted text-sm">▾</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <button class="w-10 h-10 rounded-full bg-surface-panel flex items-center justify-center text-text-main hover:bg-border-subtle transition-colors">
+        ≡
+      </button>
+      <button class="w-10 h-10 rounded-full bg-surface-panel flex items-center justify-center text-text-main hover:bg-border-subtle transition-colors">
+        🔍
+      </button>
+      <button class="w-10 h-10 rounded-full bg-brand-primary text-text-inverse flex items-center justify-center text-lg font-bold hover:bg-brand-primary/90 transition-colors">
+        +
+      </button>
+    </div>
+  </div>
+
+  <!-- Horizontal Day Strip -->
+  <div class="grid grid-cols-7 gap-2 text-center">
+    {days.map((item) => (
+      <div class="flex flex-col items-center gap-2">
+        <span class="text-xs font-medium text-text-muted">{item.day}</span>
+        <button
+          class={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
+            item.active
+              ? 'bg-text-main text-surface-card shadow-md scale-105'
+              : 'text-text-main hover:bg-surface-panel'
+          }`}
+        >
+          {item.date}
+        </button>
+      </div>
+    ))}
+  </div>
+</div>

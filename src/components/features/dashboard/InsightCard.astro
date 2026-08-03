@@ -1,0 +1,15 @@
+---
+interface Props {
+  text?: string;
+}
+
+const { text = "Here are your schedule optimization tips for today" } = Astro.props;
+---
+
+<div class="w-full bg-brand-primary/10 border border-brand-primary/20 rounded-full px-5 py-3.5 flex items-center justify-between gap-3 text-brand-primary cursor-pointer hover:bg-brand-primary/15 transition-colors">
+  <div class="flex items-center gap-3">
+    <span class="text-lg">✨</span>
+    <span class="text-sm font-medium text-text-main line-clamp-1">{text}</span>
+  </div>
+  <span class="text-sm font-bold">›</span>
+</div>

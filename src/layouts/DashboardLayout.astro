@@ -1,7 +1,8 @@
 ---
 import Sidebar from '../components/layout/Sidebar.astro';
 import Header from '../components/layout/Header.astro';
-import BottomNav from '../components/layout/BottomNav.astro';
+import Dock from '../components/layout/Dock.astro';
+import { ViewTransitions } from 'astro:transitions';
 import '../styles/global.css';
 
 interface Props {
@@ -20,24 +21,25 @@ const { title } = Astro.props;
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/manifest.json" />
     <title>{title} | Kineto Agenda</title>
+    <ViewTransitions />
   </head>
   <body class="h-full font-sans text-text-main antialiased selection:bg-brand-primary/20">
     <div class="min-h-full flex flex-col md:flex-row">
-      <!-- Persistent Left Sidebar for Desktop (>= 768px) -->
+      <!-- Persistent Left Sidebar for Desktop -->
       <Sidebar />
 
-      <div class="flex-1 flex flex-col min-w-0 pb-20 md:pb-0">
+      <div class="flex-1 flex flex-col min-w-0 pb-28 md:pb-6">
         <!-- Top Navigation Header -->
         <Header title={title} />
 
         <!-- Main Content Area -->
-        <main class="flex-1 p-4 md:p-6 overflow-y-auto">
+        <main class="flex-1 p-4 md:p-6 overflow-y-auto max-w-4xl mx-auto w-full">
           <slot />
         </main>
       </div>
 
-      <!-- Fixed Bottom Navigation Bar for Mobile (< 768px) -->
-      <BottomNav />
+      <!-- Persistent Animated Glassmorphic Dock -->
+      <Dock transition:persist />
     </div>
   </body>
 </html>
