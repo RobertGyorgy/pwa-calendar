@@ -1,6 +1,5 @@
 /**
- * Centralized Application Constants
- * Strictly no magic strings or magic numbers allowed in components or services.
+ * Centralized Application Constants & Navigation Items
  */
 
 // Timing Thresholds
@@ -11,10 +10,27 @@ export const DEFAULT_SESSION_DURATION_MS = 50 * 60 * 1000; // 50 minutes standar
 export const ROUTES = {
   HOME: '/',
   LOGIN: '/login',
+  SIGNUP: '/signup',
   DASHBOARD: '/dashboard',
-  AGENDA: '/dashboard/agenda',
+  AGENDA: '/dashboard/calendar',
   PATIENTS: '/dashboard/patients',
+  REPORTS: '/dashboard/reports',
+  SETTINGS: '/dashboard/settings',
 } as const;
+
+export interface NavItem {
+  name: string;
+  path: string;
+  iconName: 'home' | 'calendar' | 'patients' | 'reports' | 'settings';
+}
+
+export const NAV_ITEMS: NavItem[] = [
+  { name: 'Overview', path: ROUTES.DASHBOARD, iconName: 'home' },
+  { name: 'Agenda', path: ROUTES.AGENDA, iconName: 'calendar' },
+  { name: 'Patients', path: ROUTES.PATIENTS, iconName: 'patients' },
+  { name: 'Reports', path: ROUTES.REPORTS, iconName: 'reports' },
+  { name: 'Settings', path: ROUTES.SETTINGS, iconName: 'settings' },
+];
 
 // App Configuration & Service Worker
 export const SW_SCOPE = '/';

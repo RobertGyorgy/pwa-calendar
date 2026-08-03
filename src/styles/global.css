@@ -23,3 +23,15 @@
   --color-state-warning: 245 158 11;   /* Amber 500 (#f59e0b) */
   --color-state-danger: 239 68 68;     /* Red 500 (#ef4444) */
 }
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+  }
+
+  /* Prevent automatic zoom on iOS Safari by enforcing min 16px font size on inputs */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
