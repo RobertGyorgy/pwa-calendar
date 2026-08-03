@@ -9,13 +9,53 @@ interface Props {
 const { title, startTime, endTime, metadata } = Astro.props;
 ---
 
-<div class="bg-surface-panel rounded-2xl p-4.5 flex items-center justify-between">
-  <div>
-    <h4 class="text-base font-semibold text-text-main leading-snug">{title}</h4>
-    {metadata && <p class="text-xs text-text-muted mt-1 font-normal">{metadata}</p>}
+<div class="bg-white rounded-[2rem] p-5 shadow-sm flex flex-row items-center gap-4 dark:bg-neutral-800">
+  <!-- Left Column: Time -->
+  <div class="flex flex-col items-end border-r border-neutral-100 dark:border-neutral-700 pr-4 shrink-0 w-20">
+    <span class="text-base font-semibold text-neutral-900 dark:text-white">{startTime}</span>
+    <span class="text-xs text-neutral-400 font-medium">{endTime}</span>
   </div>
-  <div class="text-right shrink-0">
-    <span class="block text-sm font-medium text-text-main">{startTime}</span>
-    <span class="block text-xs text-text-muted">{endTime}</span>
+
+  <!-- Middle Column: Details -->
+  <div class="flex-grow flex flex-col justify-center">
+    <h4 class="text-lg font-semibold text-neutral-900 dark:text-white leading-tight mb-1">{title}</h4>
+    {metadata && (
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 bg-blue-500 rounded-full shrink-0"></span>
+        <p class="text-sm text-neutral-500 dark:text-neutral-400 font-medium truncate">{metadata}</p>
+      </div>
+    )}
+  </div>
+
+  <!-- Right Column: Actions -->
+  <div class="shrink-0">
+    <button 
+      class="w-10 h-10 rounded-full bg-neutral-50 hover:bg-neutral-100 dark:bg-neutral-700 dark:hover:bg-neutral-600 flex items-center justify-center transition-colors active:scale-95"
+      aria-label="Session options"
+      data-trigger-modal
+    >
+      <svg class="w-5 h-5 text-neutral-600 dark:text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+      </svg>
+    </button>
   </div>
 </div>
+
+<script>
+  function setupSessionCards() {
+    const triggers = document.querySelectorAll('[data-trigger-modal]');
+    triggers.forEach(trigger => {
+      trigger.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Dispatch custom event to open the patient details modal
+        const event = new CustomEvent('open-patient-modal');
+        document.dispatchEvent(event);
+      });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', setupSessionCards);
+  document.addEventListener('astro:page-load', setupSessionCards);
+</script>

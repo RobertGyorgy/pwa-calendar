@@ -15,13 +15,13 @@ const icons = {
 
 <nav
   id="dock-nav"
-  class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-fit rounded-full px-3 py-2 bg-surface-card/80 backdrop-blur-xl border border-white/30 dark:border-white/10 shadow-lg shadow-black/5 flex items-center gap-6 transition-all"
+  class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-fit rounded-full px-6 py-4 backdrop-blur-2xl bg-white/40 dark:bg-black/40 border border-white/40 shadow-2xl flex items-center gap-8"
 >
   <!-- Animated Sliding Active Pill Background -->
   <div
     id="dock-active-pill"
-    class="absolute top-1.5 bottom-1.5 rounded-full bg-text-main/10 pointer-events-none"
-    style="left: 0; width: 0;"
+    class="absolute top-4 bottom-4 left-0 rounded-full bg-text-main/10 pointer-events-none transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+    style="transform: translateX(0); width: 0;"
   ></div>
 
   {NAV_ITEMS.map((item, index) => {
@@ -44,8 +44,6 @@ const icons = {
 </nav>
 
 <script>
-  import { gsap } from 'gsap';
-
   function initDockAnimation() {
     const dockNav = document.getElementById('dock-nav');
     const activePill = document.getElementById('dock-active-pill');
@@ -65,39 +63,16 @@ const icons = {
     }
 
     if (activeItem) {
-      const dockRect = dockNav.getBoundingClientRect();
-      const itemRect = activeItem.getBoundingClientRect();
-      const relativeLeft = itemRect.left - dockRect.left;
+      // Use offsetLeft because activeItem is a child of the fixed positioned nav
+      const relativeLeft = activeItem.offsetLeft;
+      const itemWidth = activeItem.offsetWidth;
 
-      // Set initial position instantly without animation
-      gsap.set(activePill, {
-        left: relativeLeft,
-        width: itemRect.width,
-      });
-      
-      // When page changes via View Transitions or clicked, we can animate it if needed,
-      // but since we rely on `astro:page-load`, the DOM is fresh and we set it instantly.
-      // If we want a slide effect across navigations with View Transitions (persist), 
-      // we need to keep track of the old position.
-      // We will handle that by checking if it already has a width > 0 (was persistent).
-      
-      const currentWidth = parseFloat(activePill.style.width || "0");
-      if (currentWidth > 0) {
-        gsap.to(activePill, {
-          left: relativeLeft,
-          width: itemRect.width,
-          duration: 0.35,
-          ease: 'power2.out',
-        });
-      } else {
-        gsap.set(activePill, {
-          left: relativeLeft,
-          width: itemRect.width,
-        });
-      }
+      activePill.style.transform = `translateX(${relativeLeft}px)`;
+      activePill.style.width = `${itemWidth}px`;
     }
   }
 
+  // Use DOMContentLoaded for initial load, and astro:page-load for client-side view transitions
   document.addEventListener('DOMContentLoaded', initDockAnimation);
   document.addEventListener('astro:page-load', initDockAnimation);
 </script>

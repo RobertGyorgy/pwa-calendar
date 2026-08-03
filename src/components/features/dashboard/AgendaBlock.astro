@@ -2,24 +2,15 @@
 import SessionCard from './SessionCard.astro';
 ---
 
-<div class="bg-surface-card rounded-3xl p-6 shadow-sm space-y-6">
+<div class="bg-surface-card rounded-3xl p-8 shadow-sm space-y-8">
   <!-- Segmented Filter Tabs -->
-  <div class="flex items-center gap-2 p-1 bg-surface-panel rounded-full max-w-xs">
+  <div class="flex items-center gap-2 p-1 bg-surface-panel rounded-full max-w-[200px]">
     <button class="flex-1 py-2 px-4 rounded-full bg-text-main text-surface-card text-xs font-medium transition-all">
       All
     </button>
-    <button class="flex-1 py-2 px-4 rounded-full text-text-muted text-xs font-medium hover:text-text-main transition-all flex items-center justify-center gap-1.5">
-      <span>New (3)</span>
-      <span class="w-1.5 h-1.5 rounded-full bg-brand-accent"></span>
+    <button class="flex-1 py-2 px-4 rounded-full text-text-muted text-xs font-medium hover:text-text-main transition-all flex items-center justify-center">
+      History
     </button>
-  </div>
-
-  <!-- Agenda Sub-header -->
-  <div class="flex items-center justify-between pt-1">
-    <h3 class="text-sm font-semibold text-text-main">Earlier today</h3>
-    <span class="text-xs text-text-muted cursor-pointer">
-      2 events ▾
-    </span>
   </div>
 
   <!-- Daily Sessions List -->
