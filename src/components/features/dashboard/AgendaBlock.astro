@@ -2,25 +2,22 @@
 import SessionCard from './SessionCard.astro';
 ---
 
-<div class="bg-surface-card border border-border-subtle rounded-3xl p-6 shadow-sm space-y-6">
-  <!-- Top Handle / Indicator bar -->
-  <div class="w-10 h-1 bg-border-subtle rounded-full mx-auto -mt-2"></div>
-
+<div class="bg-surface-card rounded-3xl p-6 shadow-sm space-y-6">
   <!-- Segmented Filter Tabs -->
-  <div class="flex items-center gap-2 p-1.5 bg-surface-panel rounded-full max-w-xs">
-    <button class="flex-1 py-2 px-4 rounded-full bg-text-main text-surface-card text-xs font-semibold shadow-sm transition-all">
+  <div class="flex items-center gap-2 p-1 bg-surface-panel rounded-full max-w-xs">
+    <button class="flex-1 py-2 px-4 rounded-full bg-text-main text-surface-card text-xs font-medium transition-all">
       All
     </button>
-    <button class="flex-1 py-2 px-4 rounded-full text-text-muted text-xs font-semibold hover:text-text-main transition-all relative flex items-center justify-center gap-1">
+    <button class="flex-1 py-2 px-4 rounded-full text-text-muted text-xs font-medium hover:text-text-main transition-all flex items-center justify-center gap-1.5">
       <span>New (3)</span>
       <span class="w-1.5 h-1.5 rounded-full bg-brand-accent"></span>
     </button>
   </div>
 
   <!-- Agenda Sub-header -->
-  <div class="flex items-center justify-between pt-2">
-    <h3 class="text-base font-semibold text-text-main">Earlier today</h3>
-    <span class="text-xs text-text-muted flex items-center gap-1 cursor-pointer">
+  <div class="flex items-center justify-between pt-1">
+    <h3 class="text-sm font-semibold text-text-main">Earlier today</h3>
+    <span class="text-xs text-text-muted cursor-pointer">
       2 events ▾
     </span>
   </div>
@@ -28,18 +25,16 @@ import SessionCard from './SessionCard.astro';
   <!-- Daily Sessions List -->
   <div class="space-y-3">
     <SessionCard
-      title="Product Design Demo"
+      title="Kinetotherapy Session"
       startTime="12:00"
       endTime="13:30"
-      statusColor="bg-brand-primary"
-      metadata="Kinetotherapy Session • Room A"
+      metadata="Patient: Maria Ionescu • Recovery"
     />
     <SessionCard
-      title="Focus Time"
+      title="Evaluation & Prep"
       startTime="14:00"
       endTime="16:00"
-      statusColor="bg-brand-accent"
-      metadata="Patient Evaluation & Prep"
+      metadata="Initial Physical Assessment"
     />
   </div>
 </div>

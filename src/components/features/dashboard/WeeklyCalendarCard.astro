@@ -10,35 +10,32 @@ const days = [
 ];
 ---
 
-<div class="bg-surface-card border border-border-subtle rounded-3xl p-6 shadow-sm">
-  <!-- Month Selector & Actions Header -->
-  <div class="flex items-center justify-between mb-6">
+<div class="bg-surface-card rounded-3xl py-6 px-5 shadow-sm border border-border-subtle">
+  <!-- Month Selector & Header Actions -->
+  <div class="flex items-center justify-between mb-8">
     <div class="flex items-center gap-2 cursor-pointer">
-      <h2 class="text-2xl font-bold text-text-main">Jun</h2>
-      <span class="text-text-muted text-sm">▾</span>
+      <h2 class="text-3xl font-semibold tracking-tight text-text-main">Jun</h2>
+      <span class="text-text-muted text-base">▾</span>
     </div>
-    <div class="flex items-center gap-3">
-      <button class="w-10 h-10 rounded-full bg-surface-panel flex items-center justify-center text-text-main hover:bg-border-subtle transition-colors">
-        ≡
+    <div class="flex items-center gap-2">
+      <button aria-label="Search" class="w-11 h-11 rounded-full bg-surface-panel flex items-center justify-center text-text-main active:scale-95 transition-transform">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
       </button>
-      <button class="w-10 h-10 rounded-full bg-surface-panel flex items-center justify-center text-text-main hover:bg-border-subtle transition-colors">
-        🔍
-      </button>
-      <button class="w-10 h-10 rounded-full bg-brand-primary text-text-inverse flex items-center justify-center text-lg font-bold hover:bg-brand-primary/90 transition-colors">
+      <button aria-label="Add appointment" class="w-11 h-11 rounded-full bg-text-main text-surface-card flex items-center justify-center text-xl font-medium active:scale-95 transition-transform">
         +
       </button>
     </div>
   </div>
 
-  <!-- Horizontal Day Strip -->
-  <div class="grid grid-cols-7 gap-2 text-center">
+  <!-- Large Roomy Horizontal Day Strip -->
+  <div class="grid grid-cols-7 gap-1 text-center">
     {days.map((item) => (
-      <div class="flex flex-col items-center gap-2">
+      <div class="flex flex-col items-center gap-3">
         <span class="text-xs font-medium text-text-muted">{item.day}</span>
         <button
-          class={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
+          class={`w-11 h-11 rounded-full flex items-center justify-center text-base font-medium transition-all ${
             item.active
-              ? 'bg-text-main text-surface-card shadow-md scale-105'
+              ? 'bg-text-main text-surface-card shadow-md scale-105 font-semibold'
               : 'text-text-main hover:bg-surface-panel'
           }`}
         >

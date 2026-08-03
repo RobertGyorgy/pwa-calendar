@@ -1,6 +1,4 @@
 ---
-import Sidebar from '../components/layout/Sidebar.astro';
-import Header from '../components/layout/Header.astro';
 import Dock from '../components/layout/Dock.astro';
 import { ClientRouter } from 'astro:transitions';
 import '../styles/global.css';
@@ -20,25 +18,23 @@ const { title } = Astro.props;
     <meta name="theme-color" content="#0d9488" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/manifest.json" />
+
+    <!-- Google Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
     <title>{title} | Kineto Agenda</title>
     <ClientRouter />
   </head>
   <body class="h-full font-sans text-text-main antialiased selection:bg-brand-primary/20">
-    <div class="min-h-full flex flex-col md:flex-row">
-      <!-- Persistent Left Sidebar for Desktop -->
-      <Sidebar />
+    <div class="min-h-full flex flex-col">
+      <!-- Main Content Container (No Top Header Navbar or Left Sidebar) -->
+      <main class="flex-1 p-5 sm:p-8 pb-28 max-w-xl mx-auto w-full">
+        <slot />
+      </main>
 
-      <div class="flex-1 flex flex-col min-w-0 pb-28 md:pb-6">
-        <!-- Top Navigation Header -->
-        <Header title={title} />
-
-        <!-- Main Content Area -->
-        <main class="flex-1 p-4 md:p-6 overflow-y-auto max-w-4xl mx-auto w-full">
-          <slot />
-        </main>
-      </div>
-
-      <!-- Persistent Animated Glassmorphic Dock -->
+      <!-- Persistent Floating Icon Dock -->
       <Dock transition:persist />
     </div>
   </body>
