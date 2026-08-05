@@ -1,55 +1,57 @@
 ---
+// src/components/features/dashboard/PatientDetailsModal.astro
 ---
-<!-- Modal Backdrop -->
-<div 
-  id="patient-modal-backdrop" 
-  class="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300"
-  aria-hidden="true"
->
-  <!-- Modal Content (Bottom Sheet) -->
-  <div 
-    id="patient-modal-content"
-    class="absolute bottom-0 left-0 right-0 bg-surface-main dark:bg-neutral-900 rounded-t-[2.5rem] p-8 transform translate-y-full transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="modal-title"
-  >
-    <!-- Drag Handle Indicator -->
-    <div class="w-12 h-1.5 bg-neutral-300 dark:bg-neutral-700 rounded-full mx-auto mb-6"></div>
 
-    <!-- Header -->
-    <div class="flex items-start justify-between mb-8">
+<div 
+  id="patient-details-modal" 
+  class="fixed inset-0 z-50 flex flex-col justify-end pointer-events-none opacity-0 transition-opacity duration-300 ease-out"
+>
+  <!-- Backdrop -->
+  <div 
+    class="absolute inset-0 bg-black/50 backdrop-blur-sm modal-backdrop"
+    aria-hidden="true"
+  ></div>
+
+  <!-- Bottom Sheet -->
+  <div 
+    class="relative bg-surface-card rounded-t-[2.5rem] p-8 pb-12 shadow-2xl transform translate-y-full transition-transform duration-300 ease-out modal-sheet pointer-events-auto w-full max-w-md mx-auto"
+  >
+    <!-- Drag Handle -->
+    <div class="w-12 h-1.5 bg-border-light rounded-full mx-auto mb-6"></div>
+    
+    <div class="flex justify-between items-start mb-6">
       <div>
-        <h2 id="modal-title" class="text-2xl font-bold text-text-main mb-1">Maria Ionescu</h2>
-        <p class="text-sm text-text-muted">Kinetotherapy • 5th Session</p>
+        <h2 class="text-2xl font-semibold text-text-main">Maria Ionescu</h2>
+        <p class="text-sm text-text-muted mt-1">Kinetotherapy • Session 4/10</p>
       </div>
       <button 
-        id="close-modal-btn"
-        class="w-10 h-10 rounded-full bg-surface-panel hover:bg-neutral-200 dark:hover:bg-neutral-800 flex items-center justify-center transition-colors active:scale-95"
+        class="modal-close w-8 h-8 flex items-center justify-center rounded-full bg-surface-panel text-text-muted hover:text-text-main hover:bg-black/5 active:scale-95 transition-all"
         aria-label="Close modal"
       >
-        <svg class="w-5 h-5 text-text-main" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
         </svg>
       </button>
     </div>
 
-    <!-- Dummy Content Sections -->
-    <div class="space-y-6">
-      <div class="bg-surface-panel rounded-2xl p-4">
-        <h3 class="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">Next Steps</h3>
-        <p class="text-sm text-text-main leading-relaxed">Continue lower back mobility exercises. Increase resistance on leg press to 40kg.</p>
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-2 gap-4 mb-8">
+      <div class="bg-surface-panel p-4 rounded-2xl">
+        <span class="block text-xs text-text-muted mb-1">Time</span>
+        <span class="block text-base font-medium text-text-main">12:00 - 13:30</span>
       </div>
+      <div class="bg-surface-panel p-4 rounded-2xl">
+        <span class="block text-xs text-text-muted mb-1">Status</span>
+        <span class="block text-base font-medium text-brand-accent">Confirmed</span>
+      </div>
+    </div>
 
-      <div class="bg-surface-panel rounded-2xl p-4">
-        <h3 class="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">Payment Status</h3>
-        <div class="flex items-center gap-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
-          <p class="text-sm font-medium text-text-main">Paid (Subscription)</p>
-        </div>
-      </div>
-      
-      <button class="w-full py-4 bg-text-main text-surface-main font-semibold rounded-2xl active:scale-[0.98] transition-transform">
+    <!-- Actions -->
+    <div class="flex flex-col gap-3">
+      <button class="w-full py-4 rounded-2xl bg-text-main text-surface-card font-medium active:scale-95 transition-transform">
+        Start Session
+      </button>
+      <button class="w-full py-4 rounded-2xl bg-surface-panel text-text-main font-medium hover:bg-black/5 active:scale-95 transition-transform">
         View Full Profile
       </button>
     </div>
@@ -57,45 +59,52 @@
 </div>
 
 <script>
-  function setupModal() {
-    const backdrop = document.getElementById('patient-modal-backdrop');
-    const content = document.getElementById('patient-modal-content');
-    const closeBtn = document.getElementById('close-modal-btn');
-
-    if (!backdrop || !content || !closeBtn) return;
-
-    const openModal = () => {
-      backdrop.classList.remove('opacity-0', 'pointer-events-none');
-      backdrop.classList.add('opacity-100', 'pointer-events-auto');
-      
-      content.classList.remove('translate-y-full');
-      content.classList.add('translate-y-0');
-      
-      document.body.style.overflow = 'hidden'; // Prevent background scrolling
-    };
-
-    const closeModal = () => {
-      backdrop.classList.remove('opacity-100', 'pointer-events-auto');
-      backdrop.classList.add('opacity-0', 'pointer-events-none');
-      
-      content.classList.remove('translate-y-0');
-      content.classList.add('translate-y-full');
-      
-      document.body.style.overflow = '';
-    };
-
-    // Listen for custom event
-    document.addEventListener('open-patient-modal', openModal);
+  function setupModals() {
+    const triggers = document.querySelectorAll('[data-modal-trigger]');
     
-    // Close on button click
-    closeBtn.addEventListener('click', closeModal);
+    triggers.forEach(trigger => {
+      trigger.addEventListener('click', () => {
+        const modalId = trigger.getAttribute('data-modal-trigger');
+        if (!modalId) return;
+        
+        const modal = document.getElementById(modalId);
+        if (modal) {
+          // Show modal
+          modal.classList.remove('pointer-events-none', 'opacity-0');
+          modal.classList.add('opacity-100');
+          
+          const sheet = modal.querySelector('.modal-sheet');
+          if (sheet) {
+            sheet.classList.remove('translate-y-full');
+            sheet.classList.add('translate-y-0');
+          }
+        }
+      });
+    });
+
+    const closeButtons = document.querySelectorAll('.modal-close, .modal-backdrop');
     
-    // Close on backdrop click
-    backdrop.addEventListener('click', (e) => {
-      if (e.target === backdrop) closeModal();
+    closeButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement | null;
+        if (!target) return;
+        
+        const modal = target.closest('.fixed.z-50');
+        if (modal) {
+          // Hide modal
+          modal.classList.remove('opacity-100');
+          modal.classList.add('opacity-0', 'pointer-events-none');
+          
+          const sheet = modal.querySelector('.modal-sheet');
+          if (sheet) {
+            sheet.classList.remove('translate-y-0');
+            sheet.classList.add('translate-y-full');
+          }
+        }
+      });
     });
   }
 
-  document.addEventListener('DOMContentLoaded', setupModal);
-  document.addEventListener('astro:page-load', setupModal);
+  document.addEventListener('DOMContentLoaded', setupModals);
+  document.addEventListener('astro:page-load', setupModals);
 </script>

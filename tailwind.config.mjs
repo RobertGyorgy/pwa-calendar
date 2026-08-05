@@ -16,6 +16,7 @@ export default {
           base: 'rgb(var(--color-surface-base) / <alpha-value>)',
           card: 'rgb(var(--color-surface-card) / <alpha-value>)',
           panel: 'rgb(var(--color-surface-panel) / <alpha-value>)',
+          dark: 'rgb(var(--color-surface-dark) / <alpha-value>)',
         },
         text: {
           main: 'rgb(var(--color-text-main) / <alpha-value>)',

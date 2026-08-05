@@ -5,43 +5,176 @@ interface Props {
 
 const { name = "Dr. Maria" } = Astro.props;
 
-const days = [
-  { day: 'M', date: 7, active: false },
-  { day: 'T', date: 8, active: false },
-  { day: 'W', date: 9, active: true },
-  { day: 'T', date: 10, active: false },
-  { day: 'F', date: 11, active: false },
-  { day: 'S', date: 12, active: false },
-  { day: 'S', date: 13, active: false },
-];
+const now = new Date();
+const currentDayIndex = now.getDay(); // 0 is Sun, 1 is Mon...
+const mondayOffset = currentDayIndex === 0 ? -6 : 1 - currentDayIndex;
+
+const weekDayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+const fullDayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+const days = weekDayLabels.map((dayLabel, index) => {
+  const d = new Date(now);
+  d.setDate(now.getDate() + mondayOffset + index);
+  const isToday = d.toDateString() === now.toDateString();
+  
+  return {
+    day: dayLabel,
+    fullDay: fullDayNames[index],
+    date: d.getDate(),
+    month: d.toLocaleString('default', { month: 'short' }),
+    isToday,
+    active: isToday || (currentDayIndex === 0 && index === 6) || (index === currentDayIndex - 1)
+  };
+});
+
+const activeDayObj = days.find(d => d.active) || days[0];
 ---
 
-<div class="bg-surface-card rounded-3xl p-8 shadow-sm">
+<div class="bg-surface-card rounded-[2.5rem] p-6 shadow-sm">
   <!-- Greeting Header & Action -->
-  <div class="flex items-center justify-between mb-8">
-    <h2 class="text-4xl font-semibold tracking-tight text-text-main">Hello, {name}</h2>
+  <div class="flex items-start justify-between mb-6">
+    <div>
+      <div id="calendar-selected-label" class="text-xs font-bold uppercase tracking-widest text-text-muted/60 mb-1">
+        {activeDayObj.fullDay}, {activeDayObj.month} {activeDayObj.date}
+      </div>
+      <h2 class="text-3xl font-bold tracking-tight text-text-main">Hello, {name}</h2>
+    </div>
     
-    <button aria-label="Add appointment" class="w-11 h-11 rounded-full bg-text-main text-surface-card flex items-center justify-center text-xl font-medium active:scale-95 transition-transform shrink-0">
-      +
+    <button aria-label="Add appointment" class="w-11 h-11 rounded-full bg-brand-primary text-black flex items-center justify-center active:scale-95 transition-transform shrink-0 shadow-sm">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+      </svg>
     </button>
   </div>
 
   <!-- Vertical Capsule Calendar Strip -->
-  <div class="grid grid-cols-7 gap-1 text-center">
-    {days.map((item) => (
-      item.active ? (
-        <button class="flex flex-col items-center justify-between rounded-full py-2 px-1 bg-amber-400 text-white active:scale-95 transition-transform shadow-md h-20">
-          <span class="text-xs font-medium mt-1">{item.day}</span>
-          <span class="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center text-base font-semibold">
-            {item.date}
-          </span>
-        </button>
-      ) : (
-        <button class="flex flex-col items-center justify-between rounded-full py-2 px-1 text-text-main hover:bg-surface-panel active:scale-95 transition-transform h-20">
-          <span class="text-xs font-medium text-text-muted mt-1">{item.day}</span>
-          <span class="text-base font-medium mb-1.5">{item.date}</span>
-        </button>
-      )
+  <div id="calendar-strip" class="grid grid-cols-7 gap-2 text-center relative p-1">
+    
+    <!-- Absolute Sliding Active Pill (Yellow Background) -->
+    <div
+      id="calendar-active-pill"
+      class="absolute rounded-[2rem] bg-brand-primary pointer-events-none z-0"
+      style="left: 0; top: 0; width: 0; height: 0; opacity: 0; transition: transform 400ms cubic-bezier(0.34, 1.36, 0.64, 1), width 400ms cubic-bezier(0.34, 1.36, 0.64, 1), height 400ms cubic-bezier(0.34, 1.36, 0.64, 1), opacity 300ms ease;"
+    ></div>
+
+    <!-- Absolute Dropping Active Circle (White Date Badge) -->
+    <div
+      id="calendar-active-circle"
+      class="absolute w-8 h-8 rounded-full bg-white shadow-sm pointer-events-none z-10"
+      style="left: 0; top: 0; opacity: 0;"
+    ></div>
+
+    {days.map((item, index) => (
+      <button
+        type="button"
+        data-calendar-item
+        data-active={item.active ? "true" : "false"}
+        data-index={index}
+        data-full-date={`${item.fullDay}, ${item.month} ${item.date}`}
+        class={`relative z-20 flex flex-col items-center justify-between py-3 px-1 h-20 rounded-[2rem] transition-colors duration-300 active:scale-90 ${
+          item.active ? 'text-black font-bold' : 'text-text-main opacity-70 hover:opacity-100'
+        }`}
+      >
+        <span class="text-xs font-bold tracking-wider">{item.day}</span>
+        <span class="w-8 h-8 flex items-center justify-center text-base font-bold pointer-events-none">
+          {item.date}
+        </span>
+      </button>
     ))}
   </div>
 </div>
+
+<script>
+  function initCalendarAnimation() {
+    const strip = document.getElementById('calendar-strip');
+    const pill = document.getElementById('calendar-active-pill');
+    const circle = document.getElementById('calendar-active-circle');
+    if (!strip || !pill || !circle) return;
+
+    const items = Array.from(strip.querySelectorAll<HTMLButtonElement>('[data-calendar-item]'));
+    let activeItem: HTMLButtonElement | null = items.find(el => el.getAttribute('data-active') === 'true') || items[0] || null;
+    let dropTimeout: number | undefined;
+
+    function positionElements(target: HTMLButtonElement, isInitial: boolean = false) {
+      if (!target || !pill || !circle || !strip) return;
+      
+      // 1. Move Yellow Pill across
+      const width = target.offsetWidth;
+      const height = target.offsetHeight;
+      const left = target.offsetLeft;
+      const top = target.offsetTop;
+
+      pill.style.opacity = '1';
+      pill.style.width = `${width}px`;
+      pill.style.height = `${height}px`;
+      pill.style.transform = `translate(${left}px, ${top}px)`;
+
+      // 2. Drop white circle from top of target pill after delay
+      const numSpan = target.querySelector<HTMLSpanElement>('span:last-child');
+      if (numSpan) {
+        const cLeft = target.offsetLeft + numSpan.offsetLeft;
+        const cTop = target.offsetTop + numSpan.offsetTop;
+
+        if (dropTimeout) clearTimeout(dropTimeout);
+
+        if (isInitial) {
+          // Immediate placement on load
+          circle.style.transition = 'none';
+          circle.style.opacity = '1';
+          circle.style.transform = `translate(${cLeft}px, ${cTop}px) scale(1)`;
+        } else {
+          // Instantly start above new capsule
+          circle.style.transition = 'none';
+          circle.style.opacity = '0';
+          circle.style.transform = `translate(${cLeft}px, ${cTop - 50}px) scale(0.4)`;
+
+          // Force reflow
+          void circle.offsetWidth;
+
+          // Drop smoothly with a subtle bounce after pill finishes sliding (~160ms delay)
+          dropTimeout = window.setTimeout(() => {
+            circle.style.transition = 'transform 400ms cubic-bezier(0.34, 1.25, 0.64, 1), opacity 200ms ease';
+            circle.style.opacity = '1';
+            circle.style.transform = `translate(${cLeft}px, ${cTop}px) scale(1)`;
+          }, 160);
+        }
+      }
+    }
+
+    if (activeItem) {
+      requestAnimationFrame(() => {
+        if (activeItem) positionElements(activeItem, true);
+      });
+    }
+
+    items.forEach((item) => {
+      item.addEventListener('click', () => {
+        items.forEach(el => {
+          el.setAttribute('data-active', 'false');
+          el.classList.remove('text-black', 'font-bold');
+          el.classList.add('text-text-main', 'opacity-70');
+        });
+
+        item.setAttribute('data-active', 'true');
+        item.classList.add('text-black', 'font-bold');
+        item.classList.remove('opacity-70');
+
+        positionElements(item, false);
+
+        const label = document.getElementById('calendar-selected-label');
+        if (label) {
+          const fullDateStr = item.getAttribute('data-full-date');
+          if (fullDateStr) label.textContent = fullDateStr;
+        }
+      });
+    });
+
+    window.addEventListener('resize', () => {
+      const currentActive = items.find(el => el.getAttribute('data-active') === 'true');
+      if (currentActive) positionElements(currentActive, true);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', initCalendarAnimation);
+  document.addEventListener('astro:page-load', initCalendarAnimation);
+</script>

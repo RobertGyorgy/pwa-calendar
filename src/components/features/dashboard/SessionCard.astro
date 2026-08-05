@@ -1,61 +1,163 @@
 ---
 interface Props {
-  title: string;
-  startTime: string;
-  endTime: string;
-  metadata?: string;
+  patientName: string;
+  startTime: string; // e.g. "07:00"
+  attendanceCount: number;
+  totalSessions?: number;
+  location: 'Ghimbav' | 'Belaqua';
+  isPast?: boolean;
 }
 
-const { title, startTime, endTime, metadata } = Astro.props;
+const { 
+  patientName, 
+  startTime, 
+  attendanceCount, 
+  totalSessions = 10,
+  location,
+  isPast = false
+} = Astro.props;
+
+// Split startTime "07:00" into "07" and "00"
+const timeParts = startTime.split(':');
+const hourNum = parseInt(timeParts[0] || "0", 10);
+const hour = timeParts[0] || "00";
+const minute = timeParts[1] || "00";
+
+// Calculate end time (default to 1 hour later for display)
+const endHourStr = (hourNum + 1).toString().padStart(2, '0');
+const endTime = `${endHourStr}:${minute}`;
+
+let cardClasses = "";
+let gradientColors = "";
+
+if (location === 'Ghimbav') {
+  // Pink
+  cardClasses = "bg-brand-secondary text-white";
+  gradientColors = "from-white/30 to-white"; 
+} else {
+  // Yellow - Belaqua
+  cardClasses = "bg-brand-primary text-black";
+  gradientColors = "from-black/30 to-black";
+}
+
+const progressPercentage = Math.min(100, Math.round((attendanceCount / totalSessions) * 100));
+const clipPathValue = `inset(0 ${100 - progressPercentage}% 0 0)`;
 ---
 
-<div class="bg-white rounded-[2rem] p-5 shadow-sm flex flex-row items-center gap-4 dark:bg-neutral-800">
-  <!-- Left Column: Time -->
-  <div class="flex flex-col items-end border-r border-neutral-100 dark:border-neutral-700 pr-4 shrink-0 w-20">
-    <span class="text-base font-semibold text-neutral-900 dark:text-white">{startTime}</span>
-    <span class="text-xs text-neutral-400 font-medium">{endTime}</span>
-  </div>
+<session-card class={`block relative rounded-[2.5rem] shadow-sm overflow-hidden ${cardClasses} ${isPast ? 'opacity-90' : ''}`}>
+  
+  <!-- Elegant Fine Hatching Overlay for Past Sessions -->
+  {isPast && (
+    <div 
+      class="absolute inset-0 z-10 pointer-events-none bg-black/5"
+      style="background-image: repeating-linear-gradient(-45deg, transparent, transparent 8px, rgba(0,0,0,0.1) 8px, rgba(0,0,0,0.1) 10px);"
+    ></div>
+  )}
 
-  <!-- Middle Column: Details -->
-  <div class="flex-grow flex flex-col justify-center">
-    <h4 class="text-lg font-semibold text-neutral-900 dark:text-white leading-tight mb-1">{title}</h4>
-    {metadata && (
-      <div class="flex items-center gap-2">
-        <span class="w-2 h-2 bg-blue-500 rounded-full shrink-0"></span>
-        <p class="text-sm text-neutral-500 dark:text-neutral-400 font-medium truncate">{metadata}</p>
+  <!-- Summary Section (Always visible) -->
+  <div class="card-summary relative z-20 flex flex-col justify-between cursor-pointer transition-transform active:scale-[0.98] min-h-[110px] p-6">
+    
+    <!-- Watermark Time Background -->
+    <div class="absolute left-3 top-0 bottom-0 font-black text-[3.8rem] leading-[0.8] opacity-30 pointer-events-none tracking-tighter mix-blend-overlay flex items-center justify-start z-0 w-20">
+      <div class="flex items-start">
+        {hour}
+        <span class="text-xl mt-1 ml-0.5">{minute}</span>
       </div>
-    )}
+    </div>
+
+    <!-- Summary Content (Patient Name) -->
+    <div class="flex items-center gap-4 w-full relative z-10">
+      
+      <!-- Padded to clear the clock watermark without overlapping -->
+      <div class="flex-1 min-w-0 pl-24">
+        <h4 class="text-xl font-bold tracking-tight leading-none truncate">{patientName}</h4>
+      </div>
+    </div>
+
+    <!-- Progress (Restored to Summary) -->
+    <div class="flex items-center gap-4 mt-5 relative z-10 pl-24">
+      <div class="h-1.5 flex-1 bg-black/10 rounded-full overflow-hidden relative">
+        <div class={`h-full rounded-full bg-gradient-to-r ${gradientColors} transition-all duration-500 ease-out`} style={`width: ${progressPercentage}%;`}></div>
+      </div>
+      <div class="text-xs font-bold tracking-wide opacity-90 shrink-0">{attendanceCount}/{totalSessions}</div>
+    </div>
+
   </div>
 
-  <!-- Right Column: Actions -->
-  <div class="shrink-0">
-    <button 
-      class="w-10 h-10 rounded-full bg-neutral-50 hover:bg-neutral-100 dark:bg-neutral-700 dark:hover:bg-neutral-600 flex items-center justify-center transition-colors active:scale-95"
-      aria-label="Session options"
-      data-trigger-modal
-    >
-      <svg class="w-5 h-5 text-neutral-600 dark:text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
-      </svg>
-    </button>
+  <!-- Details Section (Hidden by default, expands on click) -->
+  <div class="card-details grid transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]" style="grid-template-rows: 0fr;">
+    <div class="overflow-hidden relative z-20">
+      
+      <!-- Full Program Time Display -->
+      <div class="px-6 pt-4 pb-2 flex justify-between items-center">
+        <div class="flex items-center gap-2 text-sm font-bold opacity-90 bg-black/5 px-4 py-2 rounded-xl backdrop-blur-sm">
+          <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {startTime} - {endTime}
+        </div>
+        <div class="text-xs font-bold uppercase tracking-widest opacity-60 text-right">
+          {location}
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="px-6 pb-5 pt-3 flex gap-2">
+        <!-- Phone Button -->
+        <a href="tel:+1234567890" class="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-black/10 hover:bg-black/20 active:scale-95 transition-all text-sm font-bold" onclick="event.stopPropagation()">
+          <svg class="w-4 h-4 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+          </svg>
+          Call
+        </a>
+
+        <!-- Drive Button -->
+        <a href="#" class="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-black/10 hover:bg-black/20 active:scale-95 transition-all text-sm font-bold" onclick="event.stopPropagation()">
+          <svg class="w-4 h-4 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+          </svg>
+          Docs
+        </a>
+
+        <!-- Paid Status Toggle -->
+        <button class="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-black/10 hover:bg-black/20 active:scale-95 transition-all text-sm font-bold" onclick="event.stopPropagation()">
+          <svg class="w-4 h-4 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Paid
+        </button>
+      </div>
+    </div>
   </div>
-</div>
+</session-card>
 
 <script>
-  function setupSessionCards() {
-    const triggers = document.querySelectorAll('[data-trigger-modal]');
-    triggers.forEach(trigger => {
-      trigger.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+  class SessionCard extends HTMLElement {
+    constructor() {
+      super();
+      
+      const summary = this.querySelector('.card-summary');
+      const details = this.querySelector('.card-details') as HTMLElement;
+      const icon = this.querySelector('.expand-icon') as HTMLElement | null;
+      
+      let isExpanded = false;
+
+      summary?.addEventListener('click', () => {
+        isExpanded = !isExpanded;
         
-        // Dispatch custom event to open the patient details modal
-        const event = new CustomEvent('open-patient-modal');
-        document.dispatchEvent(event);
+        if (isExpanded) {
+          details.style.gridTemplateRows = '1fr';
+          if (icon) icon.style.transform = 'rotate(180deg)';
+        } else {
+          details.style.gridTemplateRows = '0fr';
+          if (icon) icon.style.transform = 'rotate(0deg)';
+        }
       });
-    });
+    }
   }
 
-  document.addEventListener('DOMContentLoaded', setupSessionCards);
-  document.addEventListener('astro:page-load', setupSessionCards);
+  // Define the custom element if it hasn't been defined yet
+  if (!customElements.get('session-card')) {
+    customElements.define('session-card', SessionCard);
+  }
 </script>

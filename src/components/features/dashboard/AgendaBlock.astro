@@ -1,31 +1,54 @@
 ---
 import SessionCard from './SessionCard.astro';
+import DailyProgress from './DailyProgress.astro';
+
+const sessions = [
+  { patientName: "Marcus Chen", startTime: "07:00", attendanceCount: 12, totalSessions: 20, location: "Ghimbav" as const },
+  { patientName: "Sarah Jenkins", startTime: "08:30", attendanceCount: 3, totalSessions: 10, location: "Belaqua" as const },
+  { patientName: "Elena Rodriguez", startTime: "09:00", attendanceCount: 8, totalSessions: 10, location: "Ghimbav" as const },
+  { patientName: "David Kim", startTime: "12:30", attendanceCount: 1, totalSessions: 5, location: "Belaqua" as const },
+];
+
+// Mock current time string to simulate a past session (Marcus at 07:00)
+const currentTime = "08:00";
+
+const processedSessions = sessions.map(session => ({
+  ...session,
+  isPast: session.startTime < currentTime
+}));
+
+// Sort so upcoming is first, past goes to bottom
+const upcoming = processedSessions.filter(s => !s.isPast).sort((a, b) => a.startTime.localeCompare(b.startTime));
+const past = processedSessions.filter(s => s.isPast).sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+const displaySessions = [...upcoming, ...past];
 ---
 
-<div class="bg-surface-card rounded-3xl p-8 shadow-sm space-y-8">
-  <!-- Segmented Filter Tabs -->
-  <div class="flex items-center gap-2 p-1 bg-surface-panel rounded-full max-w-[200px]">
-    <button class="flex-1 py-2 px-4 rounded-full bg-text-main text-surface-card text-xs font-medium transition-all">
-      All
-    </button>
-    <button class="flex-1 py-2 px-4 rounded-full text-text-muted text-xs font-medium hover:text-text-main transition-all flex items-center justify-center">
-      History
-    </button>
+<div class="bg-surface-card rounded-[2.5rem] p-6 shadow-sm">
+  
+  <DailyProgress completed={3} total={8} />
+
+  <!-- Agenda Header -->
+  <div class="flex items-baseline justify-between mb-6 mt-4">
+    <div class="flex items-baseline gap-3">
+      <h3 class="text-3xl font-bold tracking-tight text-text-main">Today</h3>
+      <span class="text-lg font-medium text-text-muted/60">Schedule</span>
+    </div>
   </div>
 
   <!-- Daily Sessions List -->
-  <div class="space-y-4">
-    <SessionCard
-      title="Kinetotherapy Session"
-      startTime="12:00"
-      endTime="13:30"
-      metadata="Patient: Maria Ionescu • Recovery"
-    />
-    <SessionCard
-      title="Evaluation & Prep"
-      startTime="14:00"
-      endTime="16:00"
-      metadata="Initial Physical Assessment"
-    />
+  <div class="flex flex-col gap-4 pb-2">
+    
+    {displaySessions.map(session => (
+      <SessionCard
+        patientName={session.patientName}
+        startTime={session.startTime}
+        attendanceCount={session.attendanceCount}
+        totalSessions={session.totalSessions}
+        location={session.location}
+        isPast={session.isPast}
+      />
+    ))}
+    
   </div>
 </div>
