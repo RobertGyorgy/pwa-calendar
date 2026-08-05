@@ -291,44 +291,31 @@ const currentSectionInfo = section && sectionTitles[section] ? sectionTitles[sec
               <!-- Dynamically added custom category items (vertical bullet list) -->
             </div>
 
-            <!-- Input inline adăugare categorie -->
-            <div id="add-category-wrapper" class="pt-1">
-              <button
-                type="button"
-                id="btn-show-category-input"
-                class="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-brand-secondary/15 hover:bg-brand-secondary/25 text-brand-secondary font-extrabold text-sm active:scale-95 transition-all cursor-pointer shadow-sm"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
-                </svg>
-                <span>Adaugă categorie</span>
-              </button>
-
-              <div id="inline-category-input-box" class="hidden items-center gap-2 w-full pt-1">
-                <div class="relative flex-1 min-w-0">
-                  <input
-                    type="text"
-                    id="new-category-name"
-                    placeholder="Nume categorie..."
-                    class="w-full pl-4 pr-9 py-3 rounded-2xl bg-surface-base/80 border border-border-subtle/80 text-text-main font-bold text-sm focus:outline-none focus:ring-2 focus:ring-brand-secondary/50 transition-all"
-                  />
-                  <button
-                    type="button"
-                    id="btn-cancel-add-category"
-                    class="absolute right-2.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-surface-base hover:bg-text-muted/20 text-text-muted font-bold text-xs flex items-center justify-center transition-colors cursor-pointer"
-                    title="Anulează"
-                  >
-                    &times;
-                  </button>
-                </div>
+            <!-- Casetă de introducere DIRECT vizibilă de la început -->
+            <div id="inline-category-input-box" class="flex items-center gap-2 w-full pt-1">
+              <div class="relative flex-1 min-w-0">
+                <input
+                  type="text"
+                  id="new-category-name"
+                  placeholder="Nume categorie..."
+                  class="w-full pl-4 pr-9 py-3.5 rounded-2xl bg-surface-base/80 border border-border-subtle/80 text-text-main font-bold text-sm focus:outline-none focus:ring-2 focus:ring-brand-secondary/50 transition-all"
+                />
                 <button
                   type="button"
-                  id="btn-confirm-add-category"
-                  class="px-5 py-3 rounded-2xl bg-brand-secondary text-white font-extrabold text-sm hover:brightness-105 active:scale-95 transition-all cursor-pointer shadow-md shadow-brand-secondary/20 shrink-0"
+                  id="btn-clear-category-input"
+                  class="absolute right-2.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-surface-base hover:bg-text-muted/20 text-text-muted font-bold text-xs flex items-center justify-center transition-colors cursor-pointer"
+                  title="Șterge textul"
                 >
-                  Adaugă
+                  &times;
                 </button>
               </div>
+              <button
+                type="button"
+                id="btn-confirm-add-category"
+                class="px-5 py-3.5 rounded-2xl bg-brand-secondary text-white font-extrabold text-sm hover:brightness-105 active:scale-95 transition-all cursor-pointer shadow-md shadow-brand-secondary/20 shrink-0"
+              >
+                Adaugă
+              </button>
             </div>
           </div>
         </section>
@@ -484,23 +471,18 @@ const currentSectionInfo = section && sectionTitles[section] ? sectionTitles[sec
       }
     });
 
-    btnShowCategoryInput?.addEventListener('click', () => {
-      btnShowCategoryInput.classList.add('hidden');
-      inlineCategoryInputBox?.classList.remove('hidden');
-      inlineCategoryInputBox?.classList.add('flex');
-      if (newCategoryNameInput) {
-        newCategoryNameInput.value = '';
-        newCategoryNameInput.focus();
-      }
+    // Categorii Input Logic (Direct vizibil)
+    const btnClearInput = document.getElementById('btn-clear-category-input');
+    btnClearInput?.addEventListener('click', () => {
+      if (newCategoryNameInput) newCategoryNameInput.value = '';
     });
 
-    function hideInlineInput() {
-      inlineCategoryInputBox?.classList.remove('flex');
-      inlineCategoryInputBox?.classList.add('hidden');
-      btnShowCategoryInput?.classList.remove('hidden');
-    }
-
-    btnCancelAddCategory?.addEventListener('click', hideInlineInput);
+    newCategoryNameInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        btnConfirmAddCategory?.click();
+      }
+    });
 
     btnConfirmAddCategory?.addEventListener('click', () => {
       if (!newCategoryNameInput || !categoriesContainer) return;
@@ -536,7 +518,6 @@ const currentSectionInfo = section && sectionTitles[section] ? sectionTitles[sec
 
       categoriesContainer.appendChild(itemDiv);
       newCategoryNameInput.value = '';
-      hideInlineInput();
     });
 
     // 0. Profile Inputs Hydration
