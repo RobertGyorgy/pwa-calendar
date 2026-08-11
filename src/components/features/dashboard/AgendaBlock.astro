@@ -102,7 +102,20 @@ import DailyProgress from './DailyProgress.astro';
 
     if (stored.length === 0) {
       const emptyDay = currentAgendaDate === todayStr ? 'azi' : 'această zi';
-      list.innerHTML = `<p class="text-sm font-bold text-text-muted text-center py-4">Nicio ședință programată pentru ${emptyDay}.</p>`;
+      list.innerHTML = `
+        <div class="text-center py-6 space-y-4">
+          <p class="text-sm font-bold text-text-muted">Nicio ședință programată pentru ${emptyDay}.</p>
+          <a
+            href="/dashboard/calendar"
+            class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-brand-primary text-black font-extrabold text-sm shadow-md shadow-amber-500/15 active:scale-95 transition-all"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Programează în calendar
+          </a>
+        </div>
+      `;
       return;
     }
 
