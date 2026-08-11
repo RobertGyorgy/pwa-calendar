@@ -44,7 +44,7 @@
 </div>
 
 <script>
-  import { getPendingWrapUps, completeSession, markAbsent, rebookNextWeek } from '../../../lib/services/appointmentService';
+  import { getPendingWrapUps, completeSession, markAbsent, rebookNextWeek, getAppointment } from '../../../lib/services/appointmentService';
   import type { PendingWrapUp } from '../../../lib/services/appointmentService';
 
   class SessionWrapUpManager {
@@ -103,8 +103,22 @@
       this.btnCame?.addEventListener('click', () => this.answer(true));
       this.btnAbsent?.addEventListener('click', () => this.answer(false));
 
+      // Delegated handler pentru butoanele "Confirmă ședința" din card-uri
+      document.addEventListener('click', (e: Event) => {
+        const target = e.target as HTMLElement;
+        const btn = target.closest('[data-confirm-session]') as HTMLElement | null;
+        if (!btn) return;
+        const sessionId = btn.getAttribute('data-confirm-session');
+        if (!sessionId) return;
+        console.log('[WrapUp] confirm button clicked:', sessionId);
+        e.stopPropagation();
+        e.preventDefault();
+        this.openForSession(sessionId);
+      }, true);
+
       // Open event — pentru o sesiune specifică sau re-verificare forțată
       window.addEventListener('openWrapUp', (e: any) => {
+        console.log('[WrapUp] openWrapUp event received:', e.detail);
         const appt = e.detail?.appointment;
         if (appt) {
           this.queue = [appt];
@@ -113,6 +127,19 @@
           this.checkQueue();
         }
       });
+    }
+
+    async openForSession(sessionId: string) {
+      if (this.isProcessing) return;
+      console.log('[WrapUp] openForSession:', sessionId);
+      try {
+        const appointment = await getAppointment(sessionId);
+        this.queue = [appointment as PendingWrapUp];
+        this.showCurrent();
+      } catch (err: any) {
+        console.error('openForSession error:', err);
+        (window as any).showToast('Eroare la încărcarea programării: ' + (err?.message || err), 'error');
+      }
     }
 
     formatDate(dateStr: string): string {
@@ -295,14 +322,26 @@
   let wrapUpCheckedThisLoad = false;
 
   function initWrapUp() {
-    if (!wrapUpManager) {
-      wrapUpManager = new SessionWrapUpManager();
-    }
+    if ((window as any)._sessionWrapUpManagerInitialized) return;
+    (window as any)._sessionWrapUpManagerInitialized = true;
+    console.log('[WrapUp] initializing manager');
+
+    wrapUpManager = new SessionWrapUpManager();
+
+    // Expunem o funcție globală de rezervă (folosită de eventuali alți calleri)
+    (window as any).confirmSession = (sessionId: string) => {
+      console.log('[WrapUp] confirmSession called:', sessionId);
+      wrapUpManager?.openForSession(sessionId);
+    };
+
     // Rulează coada o singură dată per încărcare completă a aplicației
     if (!wrapUpCheckedThisLoad) {
       wrapUpCheckedThisLoad = true;
-      // Mic delay ca auth-ul Supabase să fie restaurat din storage
-      setTimeout(() => wrapUpManager?.checkQueue(), 1500);
+      // Așteptăm ca auth-ul Supabase să fie restaurat din storage
+      setTimeout(() => {
+        console.log('[WrapUp] checking queue');
+        wrapUpManager?.checkQueue();
+      }, 1500);
     }
   }
 

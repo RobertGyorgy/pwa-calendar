@@ -275,21 +275,38 @@ CREATE TRIGGER trg_valideaza_programare
   BEFORE INSERT OR UPDATE OF data, ora ON public.programari
   FOR EACH ROW EXECUTE FUNCTION public.valideaza_programare();
 
--- Trigger: incrementează automat sedinte_folosite la finalizarea sesiunii
+-- Trigger: sincronizează automat sedinte_folosite cu programarile finalizate
 CREATE OR REPLACE FUNCTION public.incrementeaza_sedinte_folosite()
 RETURNS TRIGGER LANGUAGE plpgsql AS $$
 BEGIN
-  -- Când o programare devine 'finalizat', incrementăm sedinte_folosite,
-  -- dar nu depășim sedinte_total (evităm violarea check-ului când pachetul e terminat)
-  IF NEW.status = 'finalizat' AND (OLD.status IS NULL OR OLD.status <> 'finalizat') THEN
-    UPDATE public.pacienti
-    SET sedinte_folosite = LEAST(sedinte_folosite + 1, sedinte_total)
-    WHERE id = NEW.pacient_id;
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.status = 'finalizat' THEN
+      UPDATE public.pacienti
+      SET sedinte_folosite = LEAST(sedinte_folosite + 1, sedinte_total)
+      WHERE id = NEW.pacient_id;
+    END IF;
+    RETURN NEW;
   END IF;
 
+  IF TG_OP = 'DELETE' THEN
+    IF OLD.status = 'finalizat' THEN
+      UPDATE public.pacienti
+      SET sedinte_folosite = GREATEST(sedinte_folosite - 1, 0)
+      WHERE id = OLD.pacient_id;
+    END IF;
+    RETURN OLD;
+  END IF;
+
+  -- UPDATE: status s-a schimbat
   IF OLD.status = 'finalizat' AND NEW.status <> 'finalizat' THEN
+    -- revenit din finalizat (corecție) → scade
     UPDATE public.pacienti
     SET sedinte_folosite = GREATEST(sedinte_folosite - 1, 0)
+    WHERE id = NEW.pacient_id;
+  ELSIF NEW.status = 'finalizat' AND (OLD.status IS NULL OR OLD.status <> 'finalizat') THEN
+    -- ajuns în finalizat → crește, fără a depăși pachetul
+    UPDATE public.pacienti
+    SET sedinte_folosite = LEAST(sedinte_folosite + 1, sedinte_total)
     WHERE id = NEW.pacient_id;
   END IF;
   RETURN NEW;
@@ -298,7 +315,7 @@ $$;
 
 DROP TRIGGER IF EXISTS trg_incrementeaza_sedinte ON public.programari;
 CREATE TRIGGER trg_incrementeaza_sedinte
-  AFTER INSERT OR UPDATE OF status ON public.programari
+  AFTER INSERT OR UPDATE OF status OR DELETE ON public.programari
   FOR EACH ROW EXECUTE FUNCTION public.incrementeaza_sedinte_folosite();
 
 

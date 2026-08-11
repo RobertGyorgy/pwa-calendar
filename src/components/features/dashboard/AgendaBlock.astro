@@ -287,7 +287,7 @@ import DailyProgress from './DailyProgress.astro';
                 </div>
                 ${(sessionStatus === 'programat' || sessionStatus === 'confirmat') && isPast ? `
                   <div class="px-6 pb-5 pt-1">
-                    <button type="button" class="w-full py-3 rounded-2xl bg-emerald-600 text-white font-bold text-sm active:scale-95 transition-transform shadow-sm" onclick="event.stopPropagation(); window.confirmSession('${session.id}')">
+                    <button type="button" data-confirm-session="${session.id}" class="w-full py-3 rounded-2xl bg-emerald-600 text-white font-bold text-sm active:scale-95 transition-transform shadow-sm">
                       Confirmă ședința
                     </button>
                   </div>
