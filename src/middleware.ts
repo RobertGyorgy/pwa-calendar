@@ -16,11 +16,15 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   }
 
-  // Check session server-side
+  // Check session server-side.
+  // We use getSession() instead of getUser() to avoid JWT clock-skew errors
+  // (e.g. "JWT issued at future") that can block login on Vercel/Supabase.
+  // The session cookie is encrypted/signed by Supabase; if it is present the
+  // user is considered authenticated. API calls will still validate the token.
   const supabase = createSupabaseServerClient(cookies, request.headers);
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const { data: { session }, error } = await supabase.auth.getSession();
 
-  if (error || !user) {
+  if (error || !session) {
     return redirect('/login');
   }
 
