@@ -195,7 +195,7 @@ const initialDateNumMonthYear = `${initialDayName}, ${initialDate.getDate()} ${f
                     item.active ? "text-black font-bold" : "text-text-main hover:opacity-100 opacity-70"
                   }`}
                 >
-                  <span class="day-label text-base font-black tracking-wider pointer-events-none z-20 transition-opacity duration-300 text-brand-secondary">{item.dayLabel}</span>
+                  <span class={`day-label text-sm font-black uppercase tracking-wider pointer-events-none z-20 transition-all duration-300 ${item.active ? 'text-black/90 font-black' : 'text-amber-800 dark:text-amber-400 font-black'}`}>{item.dayLabel}</span>
                   <span class={`date-number w-9 h-9 flex items-center justify-center text-lg font-black pointer-events-none relative z-20 shrink-0 ${item.active ? "text-black" : "text-text-main"}`}>
                     {item.date}
                   </span>
