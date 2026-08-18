@@ -84,14 +84,20 @@ Astro.response.headers.set('Cache-Control', 'private, max-age=30, must-revalidat
       window.dispatchEvent(new CustomEvent('sessionsUpdated'));
     };
 
-    window.addEventListener('calendarDateSelected', (e: any) => {
+    const handleDateSelected = (e: any) => {
       const date = e.detail?.date;
       if (date) {
         currentCalendarDate = date;
         (window as any).currentCalendarDate = date;
         renderTimeline();
       }
-    });
+    };
+
+    if ((window as any)._calendarDateSelectedHandler) {
+      window.removeEventListener('calendarDateSelected', (window as any)._calendarDateSelectedHandler);
+    }
+    (window as any)._calendarDateSelectedHandler = handleDateSelected;
+    window.addEventListener('calendarDateSelected', handleDateSelected);
 
     function createSessionCardHTML(session: any) {
       const paymentStatus = session.paymentStatus || 'Neachitat';
@@ -185,23 +191,26 @@ Astro.response.headers.set('Cache-Control', 'private, max-age=30, must-revalidat
               <div class="flex items-center gap-3">
                 <button 
                   type="button" 
-                  class="w-12 h-12 rounded-full bg-white shadow-sm text-black flex items-center justify-center active:scale-95 transition-transform border border-transparent" 
-                  onclick="window.editSession('${session.id}'); event.stopPropagation();"
+                  data-action-btn
+                  class="relative z-20 w-12 h-12 rounded-full bg-white shadow-sm text-black flex items-center justify-center active:scale-95 transition-transform border border-transparent" 
+                  onclick="event.stopPropagation(); event.preventDefault(); window.editSession('${session.id}');"
                 >
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.89 1.12l-2.843.712a.75.75 0 01-.904-.903l.71-2.842a4.5 4.5 0 011.12-1.89L16.862 4.487z"></path><path d="M19.5 7.125L16.862 4.487"></path></svg>
+                  <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.89 1.12l-2.843.712a.75.75 0 01-.904-.903l.71-2.842a4.5 4.5 0 011.12-1.89L16.862 4.487z"></path><path d="M19.5 7.125L16.862 4.487"></path></svg>
                 </button>
                 <button 
                   type="button" 
-                  class="w-12 h-12 rounded-full bg-orange-500 shadow-sm text-white flex items-center justify-center active:scale-95 transition-transform" 
-                  onclick="window.cancelSession('${session.id}'); event.stopPropagation();"
+                  data-action-btn
+                  class="relative z-20 w-12 h-12 rounded-full bg-orange-500 shadow-sm text-white flex items-center justify-center active:scale-95 transition-transform" 
+                  onclick="event.stopPropagation(); event.preventDefault(); window.cancelSession('${session.id}');"
                   title="Marchează ca Anulat/Absent"
                 >
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                  <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
                 </button>
                 <button 
                   type="button" 
-                  class="w-12 h-12 rounded-full bg-red-500 shadow-sm text-white flex items-center justify-center active:scale-95 transition-transform" 
-                  onclick="window.deleteSession('${session.id}'); event.stopPropagation();"
+                  data-action-btn
+                  class="relative z-20 w-12 h-12 rounded-full bg-red-500 shadow-sm text-white flex items-center justify-center active:scale-95 transition-transform" 
+                  onclick="event.stopPropagation(); event.preventDefault(); window.deleteSession('${session.id}');"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 </button>
@@ -231,7 +240,7 @@ Astro.response.headers.set('Cache-Control', 'private, max-age=30, must-revalidat
                 <div class="overflow-hidden relative z-20">
                   ${subscriptionWarningDetails}
                   
-                  <div class="px-6 pt-2 pb-2 space-y-3">
+                  <div class="px-6 pt-2 pb-6 space-y-3">
                     <!-- Row 1: White Pill with Black Text & Icons for Time & Location -->
                     <div class="flex items-center justify-between px-5 py-3.5 rounded-2xl bg-white text-black text-sm sm:text-base font-extrabold shadow-sm border border-transparent">
                       <span class="flex items-center gap-1.5 shrink-0 text-black">
@@ -275,8 +284,8 @@ Astro.response.headers.set('Cache-Control', 'private, max-age=30, must-revalidat
                     </div>
                   </div>
 
-                  ${sessionStatus !== 'finalizat' && sessionStatus !== 'anulat' && sessionStatus !== 'absent' ? `
-                    <div class="px-6 pb-5 pt-2">
+                  ${sessionStatus !== 'finalizat' && sessionStatus !== 'anulat' && sessionStatus !== 'absent' && (!session.selectedDate || session.selectedDate <= new Date().toISOString().split('T')[0]) ? `
+                    <div class="px-6 pb-6 pt-2">
                       <button type="button" class="w-full h-11 rounded-2xl ${isGhimbav ? 'bg-brand-primary hover:opacity-90' : 'bg-brand-secondary hover:opacity-90'} text-black font-black text-xs sm:text-sm tracking-wider uppercase active:scale-95 transition-transform shadow-md flex items-center justify-center cursor-pointer border border-transparent" onclick="event.stopPropagation(); window.confirmSession('${session.id}')">
                         <span>CONFIRMĂ ȘEDINȚA</span>
                       </button>
@@ -446,8 +455,19 @@ Astro.response.headers.set('Cache-Control', 'private, max-age=30, must-revalidat
       }).join('');
     }
 
-    window.addEventListener('sessionsUpdated', renderTimeline);
-    window.addEventListener('patientsUpdated', renderTimeline);
+    if ((window as any)._calendarSessionsHandler) {
+      window.removeEventListener('sessionsUpdated', (window as any)._calendarSessionsHandler);
+      window.removeEventListener('patientsUpdated', (window as any)._calendarPatientsHandler);
+      window.removeEventListener('settingsUpdated', (window as any)._calendarSettingsHandler);
+    }
+    
+    (window as any)._calendarSessionsHandler = renderTimeline;
+    (window as any)._calendarPatientsHandler = renderTimeline;
+    (window as any)._calendarSettingsHandler = renderTimeline;
+
+    window.addEventListener('sessionsUpdated', (window as any)._calendarSessionsHandler);
+    window.addEventListener('patientsUpdated', (window as any)._calendarPatientsHandler);
+    
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
       renderTimeline();
     } else {
@@ -455,7 +475,7 @@ Astro.response.headers.set('Cache-Control', 'private, max-age=30, must-revalidat
     }
     document.addEventListener('astro:page-load', renderTimeline);
     // Re-renderizează timeline când se schimbă orele de lucru sau pauza din Setări
-    window.addEventListener('settingsUpdated', renderTimeline);
+    window.addEventListener('settingsUpdated', (window as any)._calendarSettingsHandler);
 
     // ── Drag & drop: mută o programare (long-press apoi drag) ──────────────
     // Drop pe un slot orar din timeline → schimbă ora.

@@ -201,7 +201,7 @@ async function sendLogToSupabase(entry: LogEntry | PendingErrorLog): Promise<boo
       ? new Date(entry.timestamp).toISOString()
       : entry.created_at;
 
-    const { error } = await supabase.from('error_logs').insert({
+    const { error } = await (supabase as any).from('error_logs').insert({
       user_id: user.id,
       type: entry.type,
       source: entry.source,
@@ -313,12 +313,20 @@ export function getLogs(): LogEntry[] {
 }
 
 /**
- * Șterge logurile locale. Nu șterge din Supabase.
+ * Șterge logurile locale și cele din Supabase pentru utilizatorul curent.
  */
-export function clearLogs(): void {
+export async function clearLogs(): Promise<void> {
   if (typeof window === 'undefined') return;
   try {
     window.localStorage.removeItem(STORAGE_KEY);
+    window.localStorage.removeItem(PENDING_SYNC_KEY);
+
+    const { supabase } = await import('./supabase');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      // Șterge toate logurile din tabel, inclusiv pe cele fără user_id
+      await supabase.from('error_logs').delete().neq('id', '');
+    }
   } catch {
     // ignore
   }
