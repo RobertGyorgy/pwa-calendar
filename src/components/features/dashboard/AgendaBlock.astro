@@ -332,7 +332,7 @@
     const displayNames = memberNamesList || `${count} pacienți`;
 
     return `
-      <session-card class="group-session-card block relative rounded-2xl shadow-sm overflow-hidden mx-1 md:mx-5" data-group-id="${group.groupId}" data-group-member-ids="${memberIds}">
+      <session-card class="group-session-card block relative rounded-3xl shadow-sm overflow-hidden mx-1 md:mx-5" data-group-id="${group.groupId}" data-group-member-ids="${memberIds}">
         <div class="absolute inset-0 bg-neutral-100 flex items-center justify-end px-6 z-0">
           <div class="flex items-center gap-3" data-action-area>
             <button
@@ -362,7 +362,7 @@
             </button>
           </div>
         </div>
-        <div class="swipe-surface relative z-10 w-full h-full rounded-2xl overflow-hidden transition-transform duration-300 will-change-transform ${cardClasses}">
+        <div class="swipe-surface relative z-10 w-full h-full rounded-3xl overflow-hidden transition-transform duration-300 will-change-transform ${cardClasses}">
           <div class="card-summary relative z-20 flex items-center justify-between cursor-pointer transition-transform active:scale-[0.98] min-h-[85px] py-5 px-6">
             
             <!-- Watermark Time Background -->
@@ -544,7 +544,7 @@
       const hasDriveLink = Boolean(driveLink);
 
       return `
-        <session-card class="block relative rounded-2xl shadow-sm overflow-hidden mx-1 md:mx-5" data-session-id="${session.id}">
+        <session-card class="block relative rounded-3xl shadow-sm overflow-hidden mx-1 md:mx-5" data-session-id="${session.id}">
           <div class="absolute inset-0 bg-neutral-100 flex items-center justify-end px-6 z-0">
             <div class="flex items-center gap-3" data-action-area>
               <button 
@@ -575,7 +575,7 @@
             </div>
           </div>
 
-          <div class="swipe-surface relative z-10 w-full h-full rounded-2xl overflow-hidden transition-transform duration-300 will-change-transform ${cardClasses}">
+          <div class="swipe-surface relative z-10 w-full h-full rounded-3xl overflow-hidden transition-transform duration-300 will-change-transform ${cardClasses}">
 
             <div class="card-summary relative z-20 flex items-center justify-between cursor-pointer transition-transform active:scale-[0.98] min-h-[85px] py-5 px-6">
               
