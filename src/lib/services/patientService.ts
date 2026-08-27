@@ -571,7 +571,7 @@ export async function exportPatientsCSV(): Promise<string> {
 
   // Secțiunea 1: PACIENȚI
   rows.push(['=== LISTA PACIENȚI ===']);
-  rows.push(['Nume Complet', 'Telefon (DB)', 'Locatie', 'Plan', 'Cost (RON)', 'Sedinte Total', 'Sedinte Folosite', 'Sedinte Ramase', 'Achitat', 'Status Abonament']);
+  rows.push(['Nume Complet', 'Telefon', 'Locatie', 'Plan', 'Cost (RON)', 'Sedinte Total', 'Sedinte Folosite', 'Sedinte Ramase', 'Achitat', 'Status Abonament']);
 
   patients.forEach(p => {
     const costVal = Number(p.cost || 0);
@@ -580,13 +580,9 @@ export async function exportPatientsCSV(): Promise<string> {
     const remSess = Math.max(0, totalSess - usedSess);
     const isPaid = p.achitat === true;
 
-    // Afisam EXACT ce vine din baza de date pentru telefon (null, '', sau numarul real)
-    const telefonRaw = p.telefon;
-    const telefonDisplay = telefonRaw === null ? '[null]' : telefonRaw === '' ? '[gol]' : formatPhone(telefonRaw);
-
     rows.push([
       p.name || 'Pacient',
-      telefonDisplay,
+      formatPhone(p.telefon),
       p.locatie || '-',
       p.plan || '-',
       costVal.toString(),
