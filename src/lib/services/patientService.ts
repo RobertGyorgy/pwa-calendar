@@ -505,18 +505,23 @@ export async function exportPatientsCSV(): Promise<string> {
   // 1. Preluăm pacienții direct din tabela `pacienti` (asigură citirea tuturor câmpurilor inclusiv telefon)
   let patients: any[] = [];
   try {
+    // Citim TOȚI pacienții utilizatorului (fara filtru pe inactiv) ca sa nu pierdem date
     const { data: rawPatients, error: pErr } = await (supabase as any)
       .from('pacienti')
-      .select('*')
+      .select('id, prenume, nume, telefon, locatie, plan, cost, sedinte_total, sedinte_folosite, achitat, status_abonament, user_id')
       .eq('user_id', user.id)
-      .neq('status_abonament', 'inactiv')
       .order('prenume', { ascending: true });
 
-    if (!pErr && rawPatients && rawPatients.length > 0) {
+    if (pErr) {
+      console.error('[EXPORT] Eroare citire pacienti:', pErr);
+    }
+
+    if (!pErr && rawPatients) {
       patients = rawPatients.map((p: any) => ({
         ...p,
-        name: p.prenume === p.nume || !p.nume ? (p.prenume || 'Pacient') : `${p.prenume} ${p.nume}`.trim(),
-        telefon: p.telefon || p.phone || ''
+        name: (!p.nume || p.prenume === p.nume) ? (p.prenume || 'Pacient') : `${p.prenume} ${p.nume}`.trim(),
+        // Luam telefonul ca atare — fara fallback la '' ca sa vedem valoarea reala
+        telefon: p.telefon
       }));
     }
   } catch (e) {
@@ -528,7 +533,7 @@ export async function exportPatientsCSV(): Promise<string> {
     const fallbackPatients = await getPatients({ inactivi: false });
     patients = fallbackPatients.map((p: any) => ({
       ...p,
-      telefon: p.telefon || (p as any).phone || ''
+      telefon: p.telefon
     }));
   }
 
@@ -566,7 +571,7 @@ export async function exportPatientsCSV(): Promise<string> {
 
   // Secțiunea 1: PACIENȚI
   rows.push(['=== LISTA PACIENȚI ===']);
-  rows.push(['Nume Complet', 'Telefon', 'Locatie', 'Plan', 'Cost (RON)', 'Sedinte Total', 'Sedinte Folosite', 'Sedinte Ramase', 'Achitat', 'Status Abonament']);
+  rows.push(['Nume Complet', 'Telefon (DB)', 'Locatie', 'Plan', 'Cost (RON)', 'Sedinte Total', 'Sedinte Folosite', 'Sedinte Ramase', 'Achitat', 'Status Abonament']);
 
   patients.forEach(p => {
     const costVal = Number(p.cost || 0);
@@ -575,9 +580,13 @@ export async function exportPatientsCSV(): Promise<string> {
     const remSess = Math.max(0, totalSess - usedSess);
     const isPaid = p.achitat === true;
 
+    // Afisam EXACT ce vine din baza de date pentru telefon (null, '', sau numarul real)
+    const telefonRaw = p.telefon;
+    const telefonDisplay = telefonRaw === null ? '[null]' : telefonRaw === '' ? '[gol]' : formatPhone(telefonRaw);
+
     rows.push([
       p.name || 'Pacient',
-      formatPhone(p.telefon),
+      telefonDisplay,
       p.locatie || '-',
       p.plan || '-',
       costVal.toString(),
