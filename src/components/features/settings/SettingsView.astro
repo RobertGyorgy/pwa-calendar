@@ -429,8 +429,8 @@ const currentSectionInfo = section && sectionTitles[section] ? sectionTitles[sec
         <section class="bg-surface-card rounded-[2.5rem] p-6 shadow-sm space-y-4">
           <div class="space-y-3">
             <div id="categories-container" class="flex flex-col gap-2.5 w-full">
-              <!-- Preset standard category items (SSR pre-rendered) -->
-              {['Belaqva', 'Ghimbav', 'Neachitați', 'Achitați'].map((cat) => (
+              <!-- Filtrele/categoriile disponibile în aplicație -->
+              {['Belaqva', 'Ghimbav', 'Neachitați', 'Achitați', 'Expirați'].map((cat) => (
                 <div data-category-chip={cat} data-category-active="true" class="category-chip flex items-center justify-between p-3.5 px-4 rounded-2xl bg-surface-base/60 hover:bg-surface-base border border-transparent transition-all animate-fadeIn w-full">
                   <div class="flex items-center gap-3 min-w-0">
                     <div class="category-bullet w-2.5 h-2.5 rounded-full bg-brand-secondary shrink-0 shadow-sm shadow-brand-secondary/30 transition-colors"></div>
@@ -441,33 +441,6 @@ const currentSectionInfo = section && sectionTitles[section] ? sectionTitles[sec
                   </button>
                 </div>
               ))}
-            </div>
-
-            <!-- Casetă de introducere DIRECT vizibilă de la început -->
-            <div id="inline-category-input-box" class="flex items-center gap-2 w-full pt-1">
-              <div class="relative flex-1 min-w-0">
-                <input
-                  type="text"
-                  id="new-category-name"
-                  placeholder="Nume categorie..."
-                  class="w-full pl-4 pr-9 py-3.5 rounded-2xl bg-surface-base/80 border border-transparent text-text-main font-bold text-sm focus:outline-none focus:ring-2 focus:ring-brand-secondary/50 transition-all"
-                />
-                <button
-                  type="button"
-                  id="btn-clear-category-input"
-                  class="absolute right-2.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-surface-base hover:bg-text-muted/20 text-text-muted font-bold text-xs flex items-center justify-center transition-colors cursor-pointer"
-                  title="Șterge textul"
-                >
-                  &times;
-                </button>
-              </div>
-              <button
-                type="button"
-                id="btn-confirm-add-category"
-                class="px-5 py-3.5 rounded-2xl bg-brand-secondary text-white font-extrabold text-sm hover:brightness-105 active:scale-95 transition-all cursor-pointer shadow-md shadow-brand-secondary/20 shrink-0"
-              >
-                Adaugă
-              </button>
             </div>
           </div>
         </section>
@@ -824,8 +797,7 @@ const currentSectionInfo = section && sectionTitles[section] ? sectionTitles[sec
 
     // 6. Categories
     const categoriesContainer = document.getElementById('categories-container');
-    const btnConfirmAddCategory = document.getElementById('btn-confirm-add-category');
-    const newCategoryNameInput = document.getElementById('new-category-name') as HTMLInputElement | null;
+    const fixedCategories = ['Belaqva', 'Ghimbav', 'Neachitați', 'Achitați', 'Expirați'];
 
     function setCategoryActive(itemDiv: HTMLElement, active: boolean) {
       itemDiv.setAttribute('data-category-active', active ? 'true' : 'false');
@@ -860,97 +832,25 @@ const currentSectionInfo = section && sectionTitles[section] ? sectionTitles[sec
       }
     }
 
-    function renderCategory(catName: string, isActive = true) {
-      if (!categoriesContainer) return;
-      const itemDiv = document.createElement('div');
-      itemDiv.setAttribute('data-category-chip', catName);
-      itemDiv.className = 'category-chip flex items-center justify-between p-3.5 px-4 rounded-2xl bg-surface-base/60 hover:bg-surface-base border border-transparent transition-all animate-fadeIn w-full';
-
-      const leftBox = document.createElement('div');
-      leftBox.className = 'flex items-center gap-3 min-w-0';
-
-      const bullet = document.createElement('div');
-      bullet.className = 'category-bullet w-2.5 h-2.5 rounded-full bg-brand-secondary shrink-0 shadow-sm shadow-brand-secondary/30 transition-colors';
-
-      const span = document.createElement('span');
-      span.className = 'category-name text-text-main font-extrabold text-base tracking-tight truncate';
-      span.textContent = catName;
-
-      leftBox.appendChild(bullet);
-      leftBox.appendChild(span);
-
-      const toggleBtn = document.createElement('button');
-      toggleBtn.type = 'button';
-      toggleBtn.setAttribute('data-toggle-category', '');
-      toggleBtn.setAttribute('aria-label', 'Activează/dezactivează categoria');
-      toggleBtn.className = 'category-toggle w-12 h-7 rounded-full p-1 bg-brand-secondary shrink-0 ml-2 cursor-pointer shadow-sm flex items-center transition-colors';
-      toggleBtn.innerHTML = '<span class="category-toggle-dot w-5 h-5 rounded-full bg-white shadow-sm transform translate-x-5 transition-transform"></span>';
-      toggleBtn.addEventListener('click', () => {
-        const currentlyActive = itemDiv.getAttribute('data-category-active') === 'true';
-        setCategoryActive(itemDiv, !currentlyActive);
-      });
-
-      itemDiv.appendChild(leftBox);
-      itemDiv.appendChild(toggleBtn);
-
-      categoriesContainer.appendChild(itemDiv);
-      setCategoryActive(itemDiv, isActive);
-    }
-
     if (categoriesContainer) {
-      categoriesContainer.innerHTML = '';
-      const standards = ['Belaqva', 'Ghimbav', 'Neachitați', 'Achitați'];
-      let catList = [...standards];
-
-      if (settings.categories && Array.isArray(settings.categories) && settings.categories.length > 0) {
-        const cleanSaved = settings.categories.filter((c: string) => {
-          const norm = c.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-          return norm !== 'toti' && norm !== 'all';
-        });
-
-        const merged: string[] = [...standards];
-        cleanSaved.forEach((c: string) => {
-          const norm = c.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-          const isStandard = standards.some(s => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() === norm);
-          if (!isStandard && c.trim()) {
-            merged.push(c.trim());
-          }
-        });
-        catList = merged;
-      }
-
       const activeSet = new Set(
         Array.isArray(settings.active_categories) && settings.active_categories.length > 0
           ? settings.active_categories
-          : standards
+          : fixedCategories
       );
 
-      catList.forEach((cat) => renderCategory(cat, activeSet.has(cat)));
+      categoriesContainer.querySelectorAll<HTMLElement>('[data-category-chip]').forEach((itemDiv) => {
+        const cat = itemDiv.getAttribute('data-category-chip') || '';
+        const isActive = activeSet.has(cat);
+        setCategoryActive(itemDiv, isActive);
+
+        const toggleBtn = itemDiv.querySelector('[data-toggle-category]');
+        toggleBtn?.addEventListener('click', () => {
+          const currentlyActive = itemDiv.getAttribute('data-category-active') === 'true';
+          setCategoryActive(itemDiv, !currentlyActive);
+        });
+      });
     }
-
-    btnConfirmAddCategory?.addEventListener('click', () => {
-      if (!newCategoryNameInput || !categoriesContainer) return;
-      const catName = newCategoryNameInput.value.trim();
-      if (!catName) return;
-      
-      // Prevent duplicates visually
-      if (document.querySelector(`[data-category-chip="${catName}"]`)) return;
-
-      renderCategory(catName);
-      newCategoryNameInput.value = '';
-    });
-
-    const btnClearInput = document.getElementById('btn-clear-category-input');
-    btnClearInput?.addEventListener('click', () => {
-      if (newCategoryNameInput) newCategoryNameInput.value = '';
-    });
-
-    newCategoryNameInput?.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        btnConfirmAddCategory?.click();
-      }
-    });
 
     // --- LOGIC ---
     

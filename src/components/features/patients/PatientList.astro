@@ -123,6 +123,7 @@
 
 <script>
   import { getPatients, deletePatient as deletePatientDB, isRenewalDismissed } from '../../../lib/services/patientService';
+  import { getSettings } from '../../../lib/services/settingsService';
   import { escapeHtml, escapeJsString } from '../../../utils/html';
 
   class PatientListManager {
@@ -130,12 +131,27 @@
     currentSearchQuery: string = '';
     activeFilters: string[] = ['all'];
     currentSort: string = 'name';
+    availableCategories: string[] = ['Belaqva', 'Ghimbav', 'Neachitați', 'Achitați', 'Expirați'];
+
+    readonly categoryToFilterKey: Record<string, string> = {
+      'Belaqva': 'belaqva',
+      'Ghimbav': 'ghimbav',
+      'Neachitați': 'unpaid',
+      'Achitați': 'paid',
+      'Expirați': 'expired',
+    };
 
     constructor() {
       this.container = document.getElementById('patient-list-container');
       this.clearOldLocalStorage();
       this.bindEvents();
-      this.render();
+      this.init();
+    }
+
+    async init() {
+      await this.loadActiveCategories();
+      this.renderFilterButtons();
+      await this.render();
     }
 
     clearOldLocalStorage() {
@@ -164,6 +180,8 @@
         });
 
         window.addEventListener('settingsUpdated', async () => {
+          await this.loadActiveCategories();
+          this.renderFilterButtons();
           await this.render();
         });
         (window as any)._patientEventsBound = true;
@@ -285,6 +303,35 @@
       }
 
       this.activeFilters = next.size > 0 ? Array.from(next) : ['all'];
+    }
+
+    async loadActiveCategories() {
+      try {
+        const settings = await getSettings();
+        if (Array.isArray(settings.active_categories) && settings.active_categories.length > 0) {
+          this.availableCategories = settings.active_categories;
+        }
+      } catch (e) {
+        console.warn('Eroare încărcare categorii active:', e);
+      }
+
+      // Dacă un filtru activ a devenit inactiv în settings, îl resetăm
+      const validKeys = new Set(['all', ...this.availableCategories.map((c) => this.categoryToFilterKey[c] || c)]);
+      this.activeFilters = this.activeFilters.filter((f) => validKeys.has(f));
+      if (this.activeFilters.length === 0) this.activeFilters = ['all'];
+    }
+
+    renderFilterButtons() {
+      const filterContainer = document.getElementById('filter-options');
+      if (!filterContainer) return;
+
+      filterContainer.innerHTML = `
+        <button type="button" data-filter="all" class="filter-option-btn px-3 py-3 rounded-xl bg-brand-primary text-black font-extrabold text-sm text-center transition-all active:scale-95">Toți</button>
+        ${this.availableCategories.map((cat) => {
+          const key = this.categoryToFilterKey[cat] || cat;
+          return `<button type="button" data-filter="${key}" class="filter-option-btn px-3 py-3 rounded-xl bg-white text-black border border-black/10 font-extrabold text-sm text-center transition-all active:scale-95">${cat}</button>`;
+        }).join('')}
+      `;
     }
 
     updateFilterSortPanelUI() {
