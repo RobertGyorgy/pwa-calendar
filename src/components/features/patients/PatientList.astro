@@ -62,6 +62,18 @@
     <button class="filter-btn px-5 py-2.5 rounded-full bg-white text-black font-extrabold text-sm whitespace-nowrap border border-black/10 shadow-sm active:scale-95 transition-all shrink-0" data-filter="ghimbav">Ghimbav</button>
     <button class="filter-btn px-5 py-2.5 rounded-full bg-white text-black font-extrabold text-sm whitespace-nowrap border border-black/10 shadow-sm active:scale-95 transition-all shrink-0" data-filter="unpaid">Neachitați</button>
     <button class="filter-btn px-5 py-2.5 rounded-full bg-white text-black font-extrabold text-sm whitespace-nowrap border border-black/10 shadow-sm active:scale-95 transition-all shrink-0" data-filter="paid">Achitați</button>
+    <button class="filter-btn px-5 py-2.5 rounded-full bg-white text-black font-extrabold text-sm whitespace-nowrap border border-black/10 shadow-sm active:scale-95 transition-all shrink-0" data-filter="expired">Expirați</button>
+  </div>
+
+  <!-- Sort Controls -->
+  <div class="flex items-center justify-between gap-3">
+    <span class="text-xs font-black text-text-muted uppercase tracking-wider">Sortare</span>
+    <div id="patient-sort-bar" class="flex gap-2">
+      <button class="sort-btn active px-4 py-2 rounded-full bg-brand-primary text-black font-extrabold text-xs whitespace-nowrap active:scale-95 transition-all shadow-sm" data-sort="name">Nume</button>
+      <button class="sort-btn px-4 py-2 rounded-full bg-white text-black font-extrabold text-xs whitespace-nowrap border border-black/10 shadow-sm active:scale-95 transition-all" data-sort="expired">Expirat</button>
+      <button class="sort-btn px-4 py-2 rounded-full bg-white text-black font-extrabold text-xs whitespace-nowrap border border-black/10 shadow-sm active:scale-95 transition-all" data-sort="progress">Progres</button>
+      <button class="sort-btn px-4 py-2 rounded-full bg-white text-black font-extrabold text-xs whitespace-nowrap border border-black/10 shadow-sm active:scale-95 transition-all" data-sort="payment">Plată</button>
+    </div>
   </div>
 </div>
 
@@ -99,6 +111,7 @@
     container: HTMLElement | null;
     currentSearchQuery: string = '';
     currentFilter: string = 'all';
+    currentSort: string = 'name';
 
     constructor() {
       this.container = document.getElementById('patient-list-container');
@@ -197,6 +210,26 @@
           filtersBar.scrollLeft = scrollLeft - walk;
         });
       }
+
+      // Sort buttons
+      const sortBar = document.getElementById('patient-sort-bar');
+      if (sortBar && sortBar.dataset.clickBound !== 'true') {
+        sortBar.dataset.clickBound = 'true';
+        sortBar.addEventListener('click', (e) => {
+          const target = (e.target as HTMLElement).closest('.sort-btn') as HTMLElement;
+          if (!target) return;
+
+          sortBar.querySelectorAll('.sort-btn').forEach(b => {
+            b.classList.remove('active', 'bg-brand-primary');
+            b.classList.add('bg-white', 'border', 'border-black/10');
+          });
+          target.classList.remove('bg-white', 'border', 'border-black/10');
+          target.classList.add('active', 'bg-brand-primary');
+
+          this.currentSort = target.getAttribute('data-sort') || 'name';
+          this.render();
+        });
+      }
     }
 
     async loadCategoryFilters() {
@@ -254,6 +287,14 @@
         btn.textContent = cleanName;
         filtersBar.appendChild(btn);
       });
+
+      // Fixed "Expirat" filter button
+      const expiredBtn = document.createElement('button');
+      const isExpiredActive = this.currentFilter === 'expired';
+      expiredBtn.className = `filter-btn ${isExpiredActive ? 'active bg-brand-primary text-black' : 'bg-white text-black border border-black/10'} px-5 py-2.5 rounded-full font-extrabold text-sm whitespace-nowrap active:scale-95 transition-all shadow-sm shrink-0 cursor-pointer`;
+      expiredBtn.setAttribute('data-filter', 'expired');
+      expiredBtn.textContent = 'Expirați';
+      filtersBar.appendChild(expiredBtn);
 
       // Bind delegated click handler ONCE on the filtersBar if not already bound
       if (filtersBar.dataset.clickBound !== 'true') {
@@ -354,6 +395,61 @@
             return plan.includes(customTerm) || loc.includes(customTerm) || name.includes(customTerm) || notes.includes(customTerm);
           });
         }
+
+        // Filtru pacienți cu abonament expirat
+        if (this.currentFilter === 'expired') {
+          patients = patients.filter((p: any) => {
+            const total = p.sedinte_total || 0;
+            const used = p.sedinte_folosite || 0;
+            return total > 0 && used >= total;
+          });
+        }
+
+        // Sortare
+        patients = patients.slice().sort((a: any, b: any) => {
+          const nameA = (a.name || '').toLowerCase();
+          const nameB = (b.name || '').toLowerCase();
+
+          if (this.currentSort === 'name') {
+            return nameA.localeCompare(nameB, 'ro');
+          }
+
+          if (this.currentSort === 'expired') {
+            const totalA = a.sedinte_total || 0;
+            const usedA = a.sedinte_folosite || 0;
+            const expiredA = totalA > 0 && usedA >= totalA ? 1 : 0;
+            const totalB = b.sedinte_total || 0;
+            const usedB = b.sedinte_folosite || 0;
+            const expiredB = totalB > 0 && usedB >= totalB ? 1 : 0;
+            if (expiredA !== expiredB) return expiredB - expiredA;
+            return nameA.localeCompare(nameB, 'ro');
+          }
+
+          if (this.currentSort === 'progress') {
+            const totalA = a.sedinte_total || 1;
+            const totalB = b.sedinte_total || 1;
+            const progA = Math.min(100, ((a.sedinte_folosite || 0) / totalA) * 100);
+            const progB = Math.min(100, ((b.sedinte_folosite || 0) / totalB) * 100);
+            if (progB !== progA) return progB - progA;
+            return nameA.localeCompare(nameB, 'ro');
+          }
+
+          if (this.currentSort === 'payment') {
+            const getPaymentRank = (p: any) => {
+              const suma = Number(p.suma_incasata || 0);
+              const cost = Number(p.cost || 0);
+              if (p.achitat || (cost > 0 && suma >= cost)) return 2;
+              if (suma > 0) return 1;
+              return 0;
+            };
+            const rankA = getPaymentRank(a);
+            const rankB = getPaymentRank(b);
+            if (rankA !== rankB) return rankA - rankB;
+            return nameA.localeCompare(nameB, 'ro');
+          }
+
+          return nameA.localeCompare(nameB, 'ro');
+        });
       } catch (e) {
         console.error('Eroare citire pacienti:', e);
       }
