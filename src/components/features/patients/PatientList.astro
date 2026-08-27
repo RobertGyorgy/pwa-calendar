@@ -51,8 +51,8 @@
       margin-left: 0;
     }
   </style>
-  <!-- Unified Filter + Sort Trigger -->
-  <div class="flex items-center justify-between gap-3">
+  <!-- Unified Filter + Sort Dropdown -->
+  <div class="relative inline-block" id="patient-filter-sort-wrapper">
     <button
       type="button"
       id="patient-filter-sort-trigger"
@@ -62,48 +62,38 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
       </svg>
       <span id="filter-sort-label">Toți · Nume</span>
-      <svg class="w-4 h-4 text-black/60 transition-transform" id="filter-sort-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="w-4 h-4 text-black/60 transition-transform duration-200" id="filter-sort-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
       </svg>
     </button>
-  </div>
-</div>
 
-<!-- Custom Filter + Sort Panel -->
-<div id="patient-filter-sort-overlay" class="fixed inset-0 bg-black/25 z-[105] opacity-0 pointer-events-none transition-opacity duration-300"></div>
-<div id="patient-filter-sort-panel" class="fixed inset-x-0 bottom-0 z-[110] bg-surface-card rounded-t-[2.5rem] p-6 shadow-2xl translate-y-full transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]">
-  <div class="w-12 h-1.5 bg-neutral-300 rounded-full mx-auto mb-6"></div>
-  <h3 class="text-xl font-black text-black mb-5">Filtre & sortare</h3>
-
-  <div class="space-y-6 max-h-[60vh] overflow-y-auto pb-2">
-    <!-- Filters -->
-    <div>
-      <h4 class="text-xs font-black uppercase tracking-wider text-text-muted mb-3">Filtre</h4>
-      <div id="filter-options" class="grid grid-cols-3 gap-2">
-        <button type="button" data-filter="all" class="filter-option-btn px-3 py-2.5 rounded-xl bg-brand-primary text-black font-extrabold text-xs sm:text-sm text-center transition-all active:scale-95">Toți</button>
-        <button type="button" data-filter="belaqva" class="filter-option-btn px-3 py-2.5 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs sm:text-sm text-center transition-all active:scale-95">Belaqva</button>
-        <button type="button" data-filter="ghimbav" class="filter-option-btn px-3 py-2.5 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs sm:text-sm text-center transition-all active:scale-95">Ghimbav</button>
-        <button type="button" data-filter="unpaid" class="filter-option-btn px-3 py-2.5 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs sm:text-sm text-center transition-all active:scale-95">Neachitați</button>
-        <button type="button" data-filter="paid" class="filter-option-btn px-3 py-2.5 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs sm:text-sm text-center transition-all active:scale-95">Achitați</button>
-        <button type="button" data-filter="expired" class="filter-option-btn px-3 py-2.5 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs sm:text-sm text-center transition-all active:scale-95">Expirați</button>
+    <!-- Dropdown Panel -->
+    <div id="patient-filter-sort-panel" class="absolute left-0 top-full mt-2 w-64 sm:w-72 bg-surface-card rounded-2xl p-4 shadow-xl border border-black/5 opacity-0 invisible scale-95 origin-top-left transition-all duration-200 z-50">
+      <!-- Filters -->
+      <div class="mb-4">
+        <h4 class="text-[10px] font-black uppercase tracking-wider text-text-muted mb-2">Filtre</h4>
+        <div id="filter-options" class="grid grid-cols-3 gap-1.5">
+          <button type="button" data-filter="all" class="filter-option-btn px-2 py-2 rounded-xl bg-brand-primary text-black font-extrabold text-xs text-center transition-all active:scale-95">Toți</button>
+          <button type="button" data-filter="belaqva" class="filter-option-btn px-2 py-2 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs text-center transition-all active:scale-95">Belaqva</button>
+          <button type="button" data-filter="ghimbav" class="filter-option-btn px-2 py-2 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs text-center transition-all active:scale-95">Ghimbav</button>
+          <button type="button" data-filter="unpaid" class="filter-option-btn px-2 py-2 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs text-center transition-all active:scale-95">Neachitați</button>
+          <button type="button" data-filter="paid" class="filter-option-btn px-2 py-2 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs text-center transition-all active:scale-95">Achitați</button>
+          <button type="button" data-filter="expired" class="filter-option-btn px-2 py-2 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs text-center transition-all active:scale-95">Expirați</button>
+        </div>
       </div>
-    </div>
 
-    <!-- Sort -->
-    <div>
-      <h4 class="text-xs font-black uppercase tracking-wider text-text-muted mb-3">Sortare</h4>
-      <div id="sort-options" class="grid grid-cols-2 gap-2">
-        <button type="button" data-sort="name" class="sort-option-btn px-3 py-2.5 rounded-xl bg-brand-primary text-black font-extrabold text-xs sm:text-sm text-center transition-all active:scale-95">Nume</button>
-        <button type="button" data-sort="expired" class="sort-option-btn px-3 py-2.5 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs sm:text-sm text-center transition-all active:scale-95">Expirat</button>
-        <button type="button" data-sort="progress" class="sort-option-btn px-3 py-2.5 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs sm:text-sm text-center transition-all active:scale-95">Progres</button>
-        <button type="button" data-sort="payment" class="sort-option-btn px-3 py-2.5 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs sm:text-sm text-center transition-all active:scale-95">Plată</button>
+      <!-- Sort -->
+      <div>
+        <h4 class="text-[10px] font-black uppercase tracking-wider text-text-muted mb-2">Sortare</h4>
+        <div id="sort-options" class="grid grid-cols-2 gap-1.5">
+          <button type="button" data-sort="name" class="sort-option-btn px-2 py-2 rounded-xl bg-brand-primary text-black font-extrabold text-xs text-center transition-all active:scale-95">Nume</button>
+          <button type="button" data-sort="expired" class="sort-option-btn px-2 py-2 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs text-center transition-all active:scale-95">Expirat</button>
+          <button type="button" data-sort="progress" class="sort-option-btn px-2 py-2 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs text-center transition-all active:scale-95">Progres</button>
+          <button type="button" data-sort="payment" class="sort-option-btn px-2 py-2 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs text-center transition-all active:scale-95">Plată</button>
+        </div>
       </div>
     </div>
   </div>
-
-  <button type="button" id="patient-filter-sort-close" class="w-full mt-6 py-4 rounded-full bg-brand-primary hover:brightness-105 text-black font-extrabold text-base shadow-md active:scale-95 transition-all">
-    Aplică
-  </button>
 </div>
 
 <div id="patient-list-container" class="space-y-4 pb-32 overflow-x-hidden">
@@ -218,49 +208,64 @@
     }
 
     bindFilterSortPanel() {
+      const wrapper = document.getElementById('patient-filter-sort-wrapper');
       const trigger = document.getElementById('patient-filter-sort-trigger');
       const panel = document.getElementById('patient-filter-sort-panel');
-      const overlay = document.getElementById('patient-filter-sort-overlay');
-      const closeBtn = document.getElementById('patient-filter-sort-close');
       const chevron = document.getElementById('filter-sort-chevron');
-      if (!trigger || !panel || !overlay) return;
+      if (!trigger || !panel || !wrapper) return;
 
       if (trigger.dataset.bound === 'true') return;
       trigger.dataset.bound = 'true';
 
       const openPanel = () => {
-        overlay.classList.remove('opacity-0', 'pointer-events-none');
-        panel.classList.remove('translate-y-full');
+        panel.classList.remove('opacity-0', 'invisible', 'scale-95');
+        panel.classList.add('opacity-100', 'visible', 'scale-100');
         if (chevron) chevron.style.transform = 'rotate(180deg)';
         this.updateFilterSortPanelUI();
       };
 
       const closePanel = () => {
-        overlay.classList.add('opacity-0', 'pointer-events-none');
-        panel.classList.add('translate-y-full');
+        panel.classList.add('opacity-0', 'invisible', 'scale-95');
+        panel.classList.remove('opacity-100', 'visible', 'scale-100');
         if (chevron) chevron.style.transform = '';
       };
 
-      trigger.addEventListener('click', openPanel);
-      overlay.addEventListener('click', closePanel);
-      closeBtn?.addEventListener('click', closePanel);
+      trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = panel.classList.contains('visible');
+        if (isOpen) closePanel();
+        else openPanel();
+      });
+
+      // Close when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!wrapper.contains(e.target as Node)) {
+          closePanel();
+        }
+      });
 
       // Filter options
       const filterContainer = document.getElementById('filter-options');
       filterContainer?.addEventListener('click', (e) => {
+        e.stopPropagation();
         const target = (e.target as HTMLElement).closest('.filter-option-btn') as HTMLElement;
         if (!target) return;
         this.currentFilter = target.getAttribute('data-filter') || 'all';
         this.updateFilterSortPanelUI();
+        this.render();
+        closePanel();
       });
 
       // Sort options
       const sortContainer = document.getElementById('sort-options');
       sortContainer?.addEventListener('click', (e) => {
+        e.stopPropagation();
         const target = (e.target as HTMLElement).closest('.sort-option-btn') as HTMLElement;
         if (!target) return;
         this.currentSort = target.getAttribute('data-sort') || 'name';
         this.updateFilterSortPanelUI();
+        this.render();
+        closePanel();
       });
     }
 
