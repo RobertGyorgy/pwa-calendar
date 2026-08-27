@@ -502,19 +502,65 @@ export async function exportPatientsCSV(): Promise<string> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Trebuie să fii autentificat pentru export.');
 
-  // 1. Preluăm DOAR pacienții activi ai userului curent (nu cei inactivi sau vechi)
-  const patients = await getPatients({ inactivi: false });
-  
-  // 2. Preluăm doar programările curente ale userului (excluzând pacienții șterși sau date vechi din alte conturi)
-  const { data: programari } = await (supabase as any)
-    .from('programari')
-    .select(`
-      data, ora, locatie, status, note, motiv,
-      pacienti!inner ( prenume, nume, telefon )
-    `)
-    .eq('user_id', user.id)
-    .order('data', { ascending: false })
-    .order('ora', { ascending: true });
+  // 1. Preluăm pacienții direct din tabela `pacienti` (asigură citirea tuturor câmpurilor inclusiv telefon)
+  let patients: any[] = [];
+  try {
+    const { data: rawPatients, error: pErr } = await (supabase as any)
+      .from('pacienti')
+      .select('*')
+      .eq('user_id', user.id)
+      .neq('status_abonament', 'inactiv')
+      .order('prenume', { ascending: true });
+
+    if (!pErr && rawPatients && rawPatients.length > 0) {
+      patients = rawPatients.map((p: any) => ({
+        ...p,
+        name: p.prenume === p.nume || !p.nume ? (p.prenume || 'Pacient') : `${p.prenume} ${p.nume}`.trim(),
+        telefon: p.telefon || p.phone || ''
+      }));
+    }
+  } catch (e) {
+    console.warn('Eroare citire directă pacienți:', e);
+  }
+
+  // Fallback prin getPatients dacă tabela directă nu a returnat
+  if (patients.length === 0) {
+    const fallbackPatients = await getPatients({ inactivi: false });
+    patients = fallbackPatients.map((p: any) => ({
+      ...p,
+      telefon: p.telefon || (p as any).phone || ''
+    }));
+  }
+
+  // Creăm o hartă ID -> Pacient pentru căutare rapidă și corelare la programări
+  const patientMap = new Map<string, any>(patients.map(p => [p.id, p]));
+
+  // 2. Preluăm programările utilizatorului curent
+  let programari: any[] = [];
+  try {
+    const { data: rawAppts, error: apptErr } = await (supabase as any)
+      .from('programari')
+      .select('data, ora, locatie, status, note, motiv, pacient_id')
+      .eq('user_id', user.id)
+      .order('data', { ascending: false })
+      .order('ora', { ascending: true });
+
+    if (!apptErr && rawAppts) {
+      programari = rawAppts;
+    }
+  } catch (e) {
+    console.warn('Eroare citire programări pentru export:', e);
+  }
+
+  const formatPhone = (tel: string | undefined | null) => {
+    if (!tel || !tel.trim()) return '-';
+    const clean = tel.trim();
+    // Previne interpretarea prefixului '+' ca formulă greșită în Excel
+    if (clean.startsWith('+')) {
+      return `'${clean}`;
+    }
+    return clean;
+  };
 
   const rows: string[][] = [];
 
@@ -523,16 +569,22 @@ export async function exportPatientsCSV(): Promise<string> {
   rows.push(['Nume Complet', 'Telefon', 'Locatie', 'Plan', 'Cost (RON)', 'Sedinte Total', 'Sedinte Folosite', 'Sedinte Ramase', 'Achitat', 'Status Abonament']);
 
   patients.forEach(p => {
+    const costVal = Number(p.cost || 0);
+    const totalSess = Number(p.sedinte_total || 0);
+    const usedSess = Number(p.sedinte_folosite || 0);
+    const remSess = Math.max(0, totalSess - usedSess);
+    const isPaid = p.achitat === true;
+
     rows.push([
-      p.name,
-      p.telefon || '-',
+      p.name || 'Pacient',
+      formatPhone(p.telefon),
       p.locatie || '-',
       p.plan || '-',
-      (p.cost || 0).toString(),
-      (p.sedinte_total || 0).toString(),
-      (p.sedinte_folosite || 0).toString(),
-      (p.sedinte_ramase || 0).toString(),
-      p.achitat ? 'Da' : 'Nu',
+      costVal.toString(),
+      totalSess.toString(),
+      usedSess.toString(),
+      remSess.toString(),
+      isPaid ? 'Da' : 'Nu',
       p.status_abonament || '-'
     ]);
   });
@@ -543,17 +595,20 @@ export async function exportPatientsCSV(): Promise<string> {
   rows.push(['=== AGENDA ȘEDINȚE / PROGRAMĂRI ===']);
   rows.push(['Data', 'Ora', 'Pacient', 'Telefon', 'Locatie', 'Status Ședință', 'Note / Observații', 'Motiv Anulare/Absență']);
 
-  (programari || []).forEach((pr: any) => {
-    if (!pr.pacienti) return; // Doar programările reale ale pacienților existenți
-    const p = pr.pacienti;
-    const pacientName = p ? (p.prenume === p.nume || !p.nume ? p.prenume : `${p.prenume} ${p.nume}`.trim()) : 'Pacient Necunoscut';
-    const telefon = p?.telefon || '-';
+  programari.forEach((pr: any) => {
+    const p = patientMap.get(pr.pacient_id);
+    // Dacă pacientul nu mai există în lista activă, sărim
+    if (!p) return;
+
+    const pacientName = p.name || `${p.prenume || ''} ${p.nume || ''}`.trim() || 'Pacient';
+    const telefon = formatPhone(p.telefon);
+
     rows.push([
-      pr.data,
-      pr.ora,
+      pr.data || '-',
+      pr.ora ? pr.ora.substring(0, 5) : '-',
       pacientName,
       telefon,
-      pr.locatie || '-',
+      pr.locatie || p.locatie || '-',
       pr.status || '-',
       pr.note || '-',
       pr.motiv || '-'
