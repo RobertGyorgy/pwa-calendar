@@ -80,6 +80,26 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Manifest: always network-first so the browser/PWA sees updated metadata.
+  if (url.pathname === '/manifest.json') {
+    event.respondWith(
+      fetch(request, { credentials: 'same-origin' })
+        .then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone).catch(() => {})).catch(() => {});
+          }
+          return response;
+        })
+        .catch(() =>
+          caches.open(CACHE_NAME).then((cache) => cache.match(request)).then((cached) => {
+            return cached || new Response('Offline', { status: 503, statusText: 'Offline' });
+          })
+        )
+    );
+    return;
+  }
+
   // App HTML pages: always try network first, fall back to cache only offline.
   if (isAppPage(url)) {
     event.respondWith(

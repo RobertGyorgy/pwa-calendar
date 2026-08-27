@@ -6,7 +6,7 @@ interface Props {
 const { variant = 'patient' } = Astro.props;
 ---
 
-<button onclick={variant === 'session' ? "window.dispatchEvent(new CustomEvent('openAddSession'))" : "window.dispatchEvent(new CustomEvent('openAddPatient'))"} class="w-full text-left rounded-3xl p-4 bg-surface-card shadow-sm active:scale-95 transition-transform flex items-center justify-between group">
+<button type="button" class="add-event-banner w-full text-left rounded-3xl p-4 bg-surface-card shadow-sm active:scale-95 transition-transform flex items-center justify-between group" data-event-banner data-variant={variant}>
   <div class="flex items-center gap-3">
     <div class="w-10 h-10 rounded-full bg-text-main flex items-center justify-center text-surface-card">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -14,3 +14,22 @@ const { variant = 'patient' } = Astro.props;
     <span class="text-base font-semibold text-text-main group-hover:text-text-muted transition-colors">{variant === 'session' ? 'Adaugă programare' : 'Adaugă pacient'}</span>
   </div>
 </button>
+
+<script>
+  function bindEventBanners() {
+    document.querySelectorAll<HTMLElement>('[data-event-banner]').forEach((btn) => {
+      if (btn.dataset.eventBannerBound === 'true') return;
+      btn.dataset.eventBannerBound = 'true';
+      btn.addEventListener('click', () => {
+        const variant = btn.dataset.variant;
+        if (variant === 'session') {
+          window.dispatchEvent(new CustomEvent('openAddSession'));
+        } else {
+          window.dispatchEvent(new CustomEvent('openAddPatient'));
+        }
+      });
+    });
+  }
+  bindEventBanners();
+  document.addEventListener('astro:page-load', bindEventBanners);
+</script>

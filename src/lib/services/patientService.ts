@@ -2,8 +2,9 @@
  * patientService.ts — CRUD pacienti Supabase
  * Folosit în: PatientList.astro, AddPatientSheet.astro, PaymentSheet.astro
  */
-import { supabase } from '../supabase';
+import { supabase, getCurrentUser } from '../supabase';
 import type { PacientInsert, PacientUpdate, PacientView } from '../database.types';
+import { toLocalISOString } from '../../utils/date';
 
 // ── Listare pacienți (cu filtru opțional și verificare inactivitate 30 zile) ─────────────────────
 export async function getPatients(filter?: {
@@ -15,25 +16,31 @@ export async function getPatients(filter?: {
   // 1. Verificăm și marcăm pacienții neprogramați de peste 30 de zile ca inactivi
   const date30DaysAgo = new Date();
   date30DaysAgo.setDate(date30DaysAgo.getDate() - 30);
-  const iso30DaysAgo = date30DaysAgo.toISOString().split('T')[0];
+  const iso30DaysAgo = toLocalISOString(date30DaysAgo);
 
   try {
+    const currentUser = await getCurrentUser();
+
     // Preluăm toate programările recente
     const { data: recentAppts } = await (supabase as any)
       .from('programari')
       .select('pacient_id, data')
+      .eq('user_id', currentUser.id)
       .gte('data', iso30DaysAgo);
 
     const activePatientIds = new Set((recentAppts || []).map((a: any) => a.pacient_id));
 
     // Preluăm pacienții existenți
-    const { data: allPatients } = await (supabase as any).from('pacienti').select('id, created_at, status_abonament');
+    const { data: allPatients } = await (supabase as any)
+      .from('pacienti')
+      .select('id, created_at, status_abonament')
+      .eq('user_id', currentUser.id);
     if (allPatients) {
       for (const p of allPatients as any[]) {
         const isRecentCreated = new Date(p.created_at) >= date30DaysAgo;
         // Dacă nu are ședințe în ultimele 30 zile și nu a fost creat în ultimele 30 zile -> inactivați
         if (!activePatientIds.has(p.id) && !isRecentCreated && p.status_abonament !== 'inactiv') {
-          await (supabase as any).from('pacienti').update({ status_abonament: 'inactiv' }).eq('id', p.id);
+          await (supabase as any).from('pacienti').update({ status_abonament: 'inactiv' }).eq('id', p.id).eq('user_id', currentUser.id);
         }
       }
     }
@@ -41,9 +48,11 @@ export async function getPatients(filter?: {
     console.error('Eroare verificare inactivitate pacienti:', e);
   }
 
+  const user = await getCurrentUser();
   let query = supabase
     .from('pacienti_view')
     .select('*')
+    .eq('user_id', user.id)
     .order('prenume', { ascending: true });
 
   if (filter?.locatie)              query = query.eq('locatie', filter.locatie);
@@ -196,41 +205,27 @@ export async function setPaymentStatus(id: string, achitat: boolean) {
 
 // ── Adăugare plată custom (PaymentSheet) ──────────────────────
 export async function addPayment(id: string, amount: number, markAchitat: boolean) {
-  // 1. Salvare instantanee în localStorage ca fallback
-  if (typeof window !== 'undefined') {
-    try {
-      const key = `kineto_plati_${id}`;
-      const existingStr = localStorage.getItem(key);
-      const existingArr = existingStr ? JSON.parse(existingStr) : [];
-      existingArr.push({ suma: amount, timestamp: Date.now() });
-      localStorage.setItem(key, JSON.stringify(existingArr));
-    } catch (e) {
-      console.warn('Eroare salvare plată local:', e);
-    }
+  // Salvare plată în Supabase (sursa unică de adevăr)
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Trebuie să fii autentificat pentru a adăuga o plată.');
+
+  const { error } = await (supabase as any).from('plati').insert({
+    pacient_id: id,
+    suma: amount,
+    data_platii: toLocalISOString(new Date()),
+    user_id: user.id
+  });
+  if (error) {
+    console.error('[addPayment] insert error:', error);
+    throw new Error('Eroare la salvarea plății: ' + error.message);
   }
 
-  // 2. Salvare plată direct în Supabase
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await (supabase as any).from('plati').insert({
-      pacient_id: id,
-      suma: amount,
-      data_platii: new Date().toISOString().split('T')[0],
-      user_id: user?.id
-    });
-    if (error) console.warn('Supabase plati warning:', error.message);
-  } catch (err) {
-    console.warn('Network or schema warning for Supabase plati:', err);
-  }
-
-  // 3. Obținem suma totală achitată și costul pacientului
+  // Actualizăm statusul pacientului pe baza sumei totale achitate
   const totalPaid = await getPatientPayments(id);
   const patient = await getPatient(id);
   const cost = patient?.cost || 0;
 
-  // 4. Actualizăm statusul în Supabase
   const shouldMarkAchitat = markAchitat || (cost > 0 && totalPaid >= cost);
-  console.log('[addPayment] updating achitat:', { id, amount, markAchitat, totalPaid, cost, shouldMarkAchitat });
   const { error: updateErr } = await (supabase as any)
     .from('pacienti')
     .update({ achitat: shouldMarkAchitat })
@@ -251,7 +246,8 @@ export async function resetPatientSubscription(
 ): Promise<void> {
   const current = await getPatient(id);
   const nextTotal = newTotalSessions ?? (current.sedinte_total || 10);
-  const nextCost = (current.cost || 0) + newCostTotal;
+  // Reînnoirea înseamnă un pachet nou: costul devine cel al noului pachet.
+  const nextCost = newCostTotal;
 
   let isAchitat = false;
   let amountToAdd = 0;
@@ -342,24 +338,12 @@ export async function renewWithPrompt(patientId: string, currentTotal: number, p
 
 // ── Obținere plăți pacient (Local + Supabase Hybrid) ───────────
 export async function getPatientPayments(id: string): Promise<number> {
-  let localTotal = 0;
-  if (typeof window !== 'undefined') {
-    try {
-      const key = `kineto_plati_${id}`;
-      const existingStr = localStorage.getItem(key);
-      if (existingStr) {
-        const arr = JSON.parse(existingStr);
-        localTotal = arr.reduce((total: number, item: any) => total + (item.suma || 0), 0);
-      }
-    } catch (e) {
-      console.warn('Eroare citire plăți local:', e);
-    }
-  }
-
+  // Sursa unică de adevăr este tabela `plati` din Supabase.
   let dbTotal = 0;
   let hasDbPayments = false;
   try {
-    const { data, error } = await (supabase as any).from('plati').select('suma').eq('pacient_id', id);
+    const currentUser = await getCurrentUser();
+    const { data, error } = await (supabase as any).from('plati').select('suma').eq('pacient_id', id).eq('user_id', currentUser.id);
     if (!error && data && data.length > 0) {
       dbTotal = data.reduce((total: number, plata: any) => total + (plata.suma || 0), 0);
       hasDbPayments = true;
@@ -368,9 +352,22 @@ export async function getPatientPayments(id: string): Promise<number> {
     console.error('Eroare citire plăți Supabase:', e);
   }
 
-  const recordedTotal = Math.max(localTotal, dbTotal);
-  if (recordedTotal > 0 || hasDbPayments) {
-    return recordedTotal;
+  if (hasDbPayments) {
+    return dbTotal;
+  }
+
+  // Fallback localStorage doar pentru dispozitive care nu au încă sincronizate plățile.
+  if (typeof window !== 'undefined') {
+    try {
+      const key = `kineto_plati_${id}`;
+      const existingStr = localStorage.getItem(key);
+      if (existingStr) {
+        const arr = JSON.parse(existingStr);
+        return arr.reduce((total: number, item: any) => total + (item.suma || 0), 0);
+      }
+    } catch (e) {
+      console.warn('Eroare citire plăți local:', e);
+    }
   }
 
   // Dacă pacientul este marcat ca achitat integral (ex: setat la creare), suma achitată este costul total
@@ -381,7 +378,7 @@ export async function getPatientPayments(id: string): Promise<number> {
     }
   } catch (e) {}
 
-  return recordedTotal;
+  return 0;
 }
 
 export interface PaymentHistoryItem {
@@ -395,15 +392,17 @@ export async function getPatientPaymentHistoryDetails(id: string): Promise<Payme
   const history: PaymentHistoryItem[] = [];
 
   try {
+    const currentUser = await getCurrentUser();
     const { data, error } = await (supabase as any)
       .from('plati')
       .select('id, suma, data_platii, created_at')
       .eq('pacient_id', id)
+      .eq('user_id', currentUser.id)
       .order('data_platii', { ascending: false });
 
     if (!error && data && data.length > 0) {
       data.forEach((p: any) => {
-        const dStr = p.data_platii || (p.created_at ? p.created_at.split('T')[0] : new Date().toISOString().split('T')[0]);
+        const dStr = p.data_platii || (p.created_at ? toLocalISOString(new Date(p.created_at)) : toLocalISOString(new Date()));
         history.push({
           id: p.id,
           suma: Number(p.suma || 0),
@@ -416,22 +415,20 @@ export async function getPatientPaymentHistoryDetails(id: string): Promise<Payme
     console.warn('Eroare citire istoric plăți Supabase:', e);
   }
 
-  if (typeof window !== 'undefined') {
+  // Fallback localStorage doar dacă nu există încă plăți în DB.
+  if (history.length === 0 && typeof window !== 'undefined') {
     try {
       const key = `kineto_plati_${id}`;
       const existingStr = localStorage.getItem(key);
       if (existingStr) {
         const arr = JSON.parse(existingStr);
         arr.forEach((item: any) => {
-          const itemDate = item.timestamp ? new Date(item.timestamp).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-          const exists = history.some(h => h.suma === Number(item.suma) && h.data_platii === itemDate);
-          if (!exists) {
-            history.push({
-              suma: Number(item.suma || 0),
-              data_platii: itemDate,
-              descriere: 'Plată parțială'
-            });
-          }
+          const itemDate = item.timestamp ? toLocalISOString(new Date(item.timestamp)) : toLocalISOString(new Date());
+          history.push({
+            suma: Number(item.suma || 0),
+            data_platii: itemDate,
+            descriere: 'Plată parțială'
+          });
         });
       }
     } catch (e) {
@@ -445,7 +442,7 @@ export async function getPatientPaymentHistoryDetails(id: string): Promise<Payme
       const totalPaid = await getPatientPayments(id);
       if (totalPaid > 0 || patient.achitat) {
         const paidVal = totalPaid > 0 ? totalPaid : Number(patient.cost || 0);
-        const pDate = patient.created_at ? patient.created_at.split('T')[0] : new Date().toISOString().split('T')[0];
+        const pDate = patient.created_at ? toLocalISOString(new Date(patient.created_at)) : toLocalISOString(new Date());
         history.push({
           suma: paidVal,
           data_platii: pDate,
@@ -470,20 +467,22 @@ export async function resetPayments(id: string) {
   }
 
   try {
-    await (supabase as any).from('plati').delete().eq('pacient_id', id);
+    const currentUser = await getCurrentUser();
+    await (supabase as any).from('plati').delete().eq('pacient_id', id).eq('user_id', currentUser.id);
+    await (supabase as any).from('pacienti').update({ achitat: false }).eq('id', id).eq('user_id', currentUser.id);
   } catch (err) {
     console.warn('Eroare ștergere plăți Supabase:', err);
   }
-
-  await (supabase as any).from('pacienti').update({ achitat: false }).eq('id', id);
 }
 
 // ── Ștergere pacient ──────────────────────────────────────────
 export async function deletePatient(id: string) {
+  const user = await getCurrentUser();
   const { error } = await supabase
     .from('pacienti')
     .delete()
-    .eq('id', id);
+    .eq('id', id)
+    .eq('user_id', user.id);
 
   if (error) throw new Error('Eroare la ștergerea pacientului: ' + error.message);
 }
@@ -492,7 +491,8 @@ export async function deletePatient(id: string) {
 export async function exportPatientsCSV(): Promise<string> {
   // 1. Preluăm pacienții reali din Supabase
   const patients = await getPatients();
-  
+  const user = await getCurrentUser();
+
   // 2. Preluăm toate programările reale din Supabase
   const { data: programari } = await supabase
     .from('programari')
@@ -500,6 +500,7 @@ export async function exportPatientsCSV(): Promise<string> {
       data, ora, locatie, status, note, motiv,
       pacienti ( prenume, nume, telefon )
     `)
+    .eq('user_id', user.id)
     .order('data', { ascending: false })
     .order('ora', { ascending: true });
 

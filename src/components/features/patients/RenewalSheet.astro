@@ -79,24 +79,21 @@
       <div class="grid grid-cols-3 gap-1.5 p-1 bg-black/5 rounded-2xl" id="renewal-payment-mode-container">
         <button 
           type="button" 
-          data-payment="Neachitat" 
-          onclick="window.selectRenewalPayment('Neachitat')"
+          data-payment="Neachitat"
           class="renewal-payment-btn py-2.5 px-1.5 rounded-xl text-xs sm:text-sm font-black transition-all text-center truncate bg-rose-100 text-rose-700 shadow-sm"
         >
           Neachitat
         </button>
         <button 
           type="button" 
-          data-payment="Parțial" 
-          onclick="window.selectRenewalPayment('Parțial')"
+          data-payment="Parțial"
           class="renewal-payment-btn py-2.5 px-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all text-center truncate text-text-muted hover:text-black"
         >
           Parțial
         </button>
         <button 
           type="button" 
-          data-payment="Achitat" 
-          onclick="window.selectRenewalPayment('Achitat')"
+          data-payment="Achitat"
           class="renewal-payment-btn py-2.5 px-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all text-center truncate text-text-muted hover:text-black"
         >
           Achitat
@@ -517,10 +514,7 @@
               pacient_id: this.currentPatientId,
               data: this.pendingAppointment.data,
               ora: this.pendingAppointment.ora,
-              locatie: this.pendingAppointment.locatie || 'Belaqva',
-              tip_serviciu: this.pendingAppointment.tip_serviciu || 'Kinetoterapie',
-              sedinta_numar: 1,
-              status: 'programat'
+              locatie: this.pendingAppointment.locatie || 'Belaqva'
             });
           } catch (apptErr) {
             console.warn('Eroare creare programare la reinnoire:', apptErr);

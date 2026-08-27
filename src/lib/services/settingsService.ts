@@ -20,7 +20,6 @@ export const DEFAULT_PRICING_PRESETS: PricingPreset[] = [
 ];
 
 const DEFAULT_SETTINGS: Settings & { pricing_presets?: PricingPreset[] } = {
-  id: 'default',
   therapist_name: 'Roxana',
   work_start: '08:00',
   work_end: '18:00',

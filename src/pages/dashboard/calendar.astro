@@ -132,7 +132,7 @@ Astro.response.headers.set('Cache-Control', 'private, max-age=30, must-revalidat
     import { getAppointmentsByDate, updateAppointment, swapAppointmentPatients } from '../../lib/services/appointmentService';
     import { getSettings, saveSettings } from '../../lib/services/settingsService';
     import { getPatientPayments, isRenewalDismissed } from '../../lib/services/patientService';
-    import { escapeHtml, escapeJsString } from '../../utils/html';
+    import { escapeHtml, isAllowedUrl } from '../../utils/html';
 
     function localDateStr(d = new Date()) {
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -376,7 +376,6 @@ Astro.response.headers.set('Cache-Control', 'private, max-age=30, must-revalidat
       const cleanTimeStr = rawTime.substring(0, 5);
       const patientNameStr = session.patientName || "Pacient";
       const safePatientName = escapeHtml(patientNameStr);
-      const safePatientNameJs = escapeJsString(session.patientName || '');
       const safeLocation = escapeHtml(locationStr);
       const safePhone = escapeHtml(session.patientPhone || '+1234567890');
       const timeParts = cleanTimeStr.split(':');
@@ -418,8 +417,8 @@ Astro.response.headers.set('Cache-Control', 'private, max-age=30, must-revalidat
                 <p class="text-xs sm:text-sm font-black text-black truncate">Abonament terminat</p>
                 <p class="text-[10px] font-bold text-black/70">0/${session.totalSessions || 10} ședințe</p>
               </div>
-              <button type="button" class="shrink-0 px-4 py-2.5 rounded-full bg-brand-secondary text-black text-xs font-black uppercase tracking-wide shadow-sm active:scale-95 transition-transform" onclick="event.stopPropagation(); window.renewSubscription('${session.patientId}', ${session.totalSessions || 10}, '${safePatientNameJs}')">Reînnoiește</button>
-              <button type="button" class="shrink-0 w-9 h-9 rounded-full bg-surface-card text-text-muted flex items-center justify-center active:scale-95 transition-transform" onclick="event.stopPropagation(); window.dismissSubscriptionWarning('${session.patientId}')" aria-label="Nu acum">
+              <button type="button" class="shrink-0 px-4 py-2.5 rounded-full bg-brand-secondary text-black text-xs font-black uppercase tracking-wide shadow-sm active:scale-95 transition-transform" data-action="renewSubscription" data-patient-id="${escapeHtml(session.patientId)}" data-total-sessions="${session.totalSessions || 10}" data-patient-name="${safePatientName}">Reînnoiește</button>
+              <button type="button" class="shrink-0 w-9 h-9 rounded-full bg-surface-card text-text-muted flex items-center justify-center active:scale-95 transition-transform" data-action="dismissSubscriptionWarning" data-patient-id="${escapeHtml(session.patientId)}" aria-label="Nu acum">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
               </button>
             </div>
@@ -455,28 +454,31 @@ Astro.response.headers.set('Cache-Control', 'private, max-age=30, must-revalidat
             <!-- Swipe Action Background -->
             <div class="absolute inset-0 bg-neutral-100 flex items-center justify-end px-6 z-0">
               <div class="flex items-center gap-3" data-action-area>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   data-action-btn
-                  class="relative z-20 w-12 h-12 rounded-full bg-white shadow-sm text-black flex items-center justify-center active:scale-95 transition-transform border border-transparent" 
-                  onclick="event.stopPropagation(); event.preventDefault(); window.editSession('${session.id}');"
+                  data-action="editSession"
+                  data-session-id="${escapeHtml(session.id)}"
+                  class="relative z-20 w-12 h-12 rounded-full bg-white shadow-sm text-black flex items-center justify-center active:scale-95 transition-transform border border-transparent"
                 >
                   <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.89 1.12l-2.843.712a.75.75 0 01-.904-.903l.71-2.842a4.5 4.5 0 011.12-1.89L16.862 4.487z"></path><path d="M19.5 7.125L16.862 4.487"></path></svg>
                 </button>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   data-action-btn
-                  class="relative z-20 w-12 h-12 rounded-full bg-orange-500 shadow-sm text-white flex items-center justify-center active:scale-95 transition-transform" 
-                  onclick="event.stopPropagation(); event.preventDefault(); window.cancelSession('${session.id}');"
+                  data-action="cancelSession"
+                  data-session-id="${escapeHtml(session.id)}"
+                  class="relative z-20 w-12 h-12 rounded-full bg-orange-500 shadow-sm text-white flex items-center justify-center active:scale-95 transition-transform"
                   title="Marchează ca Anulat/Absent"
                 >
                   <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
                 </button>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   data-action-btn
-                  class="relative z-20 w-12 h-12 rounded-full bg-red-500 shadow-sm text-white flex items-center justify-center active:scale-95 transition-transform" 
-                  onclick="event.stopPropagation(); event.preventDefault(); window.deleteSession('${session.id}');"
+                  data-action="deleteSession"
+                  data-session-id="${escapeHtml(session.id)}"
+                  class="relative z-20 w-12 h-12 rounded-full bg-red-500 shadow-sm text-white flex items-center justify-center active:scale-95 transition-transform"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 </button>
@@ -526,22 +528,37 @@ Astro.response.headers.set('Cache-Control', 'private, max-age=30, must-revalidat
 
                     <!-- Row 2: Payment Badge on Left (Spacious px-6 padding) + Icon-only Call/Folder Buttons on Right -->
                     <div class="flex items-center justify-between pt-0.5">
-                      <button 
+                      <button
                         type="button"
-                        class="h-11 flex items-center justify-center px-6 rounded-2xl ${paymentBadgeClass} hover:opacity-90 active:scale-95 transition-all text-sm sm:text-base font-black cursor-pointer shadow-sm whitespace-nowrap" 
-                        onclick="event.stopPropagation(); window.dispatchEvent(new CustomEvent('openPaymentSheet', { detail: { patientId: '${session.patientId}' } }))"
+                        class="h-11 flex items-center justify-center px-6 rounded-2xl ${paymentBadgeClass} hover:opacity-90 active:scale-95 transition-all text-sm sm:text-base font-black cursor-pointer shadow-sm whitespace-nowrap"
+                        data-action="openPaymentSheet"
+                        data-patient-id="${escapeHtml(session.patientId)}"
                       >
                         <span>${displayPaymentLabel}</span>
                       </button>
 
                       <div class="flex items-center gap-2">
-                        <a href="tel:${safePhone}" class="w-11 h-11 rounded-2xl bg-white hover:bg-neutral-50 border border-transparent shadow-sm active:scale-95 transition-all flex items-center justify-center text-black cursor-pointer" title="Sună pacientul" onclick="event.stopPropagation()">
+                        <a
+                          href="tel:${safePhone}"
+                          class="w-11 h-11 rounded-2xl bg-white hover:bg-neutral-50 border border-transparent shadow-sm active:scale-95 transition-all flex items-center justify-center text-black cursor-pointer"
+                          title="Sună pacientul"
+                          data-action="callPhone"
+                          data-phone="${safePhone}"
+                        >
                           <svg class="w-5 h-5 text-black opacity-85" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                           </svg>
                         </a>
 
-                        <a href="${safeDriveLink}" target="${hasDriveLink ? '_blank' : '_self'}" rel="noopener noreferrer" class="w-11 h-11 rounded-2xl bg-white hover:bg-neutral-50 border border-transparent shadow-sm active:scale-95 transition-all flex items-center justify-center text-black cursor-pointer" title="Deschide Dosar/Drive" onclick="event.stopPropagation(); if (!${hasDriveLink}) { event.preventDefault(); if (window.showToast) { window.showToast('Pacientul nu are un link de dosar/Drive salvat.', 'info'); } else { alert('Pacientul nu are un link de dosar/Drive salvat.'); } }">
+                        <a
+                          href="${safeDriveLink}"
+                          target="${hasDriveLink ? '_blank' : '_self'}"
+                          rel="noopener noreferrer"
+                          class="w-11 h-11 rounded-2xl bg-white hover:bg-neutral-50 border border-transparent shadow-sm active:scale-95 transition-all flex items-center justify-center text-black cursor-pointer"
+                          title="Deschide Dosar/Drive"
+                          data-action="openDriveLink"
+                          data-drive-link="${safeDriveLink}"
+                        >
                           <svg class="w-5 h-5 text-black opacity-85" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                           </svg>
@@ -552,7 +569,7 @@ Astro.response.headers.set('Cache-Control', 'private, max-age=30, must-revalidat
 
                   ${sessionStatus !== 'finalizat' && sessionStatus !== 'anulat' && sessionStatus !== 'absent' && (!session.selectedDate || session.selectedDate < todayStr || (session.selectedDate === todayStr && nowStr >= formattedEnd)) ? `
                     <div class="px-6 pb-6 pt-2">
-                      <button type="button" class="w-full h-11 rounded-2xl ${isGhimbav ? 'bg-brand-primary text-black' : 'bg-brand-secondary text-white'} font-black text-xs sm:text-sm tracking-wider uppercase active:scale-95 transition-transform shadow-md flex items-center justify-center cursor-pointer border border-transparent hover:opacity-95" onclick="event.stopPropagation(); window.confirmSession('${session.id}')">
+                      <button type="button" class="w-full h-11 rounded-2xl ${isGhimbav ? 'bg-brand-primary text-black' : 'bg-brand-secondary text-white'} font-black text-xs sm:text-sm tracking-wider uppercase active:scale-95 transition-transform shadow-md flex items-center justify-center cursor-pointer border border-transparent hover:opacity-95" data-action="confirmSession" data-session-id="${escapeHtml(session.id)}">
                         <span>CONFIRMĂ ȘEDINȚA</span>
                       </button>
                     </div>
@@ -563,6 +580,140 @@ Astro.response.headers.set('Cache-Control', 'private, max-age=30, must-revalidat
           </div>
         </session-card>
       `;
+    }
+
+    function bindTimelineEvents(container: HTMLElement) {
+      if (!container) return;
+
+      container.querySelectorAll<HTMLElement>('[data-action="editSession"]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          const id = btn.dataset.sessionId;
+          if (id) (window as any).editSession(id);
+        });
+      });
+
+      container.querySelectorAll<HTMLElement>('[data-action="cancelSession"]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          const id = btn.dataset.sessionId;
+          if (id) (window as any).cancelSession(id);
+        });
+      });
+
+      container.querySelectorAll<HTMLElement>('[data-action="deleteSession"]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          const id = btn.dataset.sessionId;
+          if (id) (window as any).deleteSession(id);
+        });
+      });
+
+      container.querySelectorAll<HTMLElement>('[data-action="confirmSession"]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.sessionId;
+          if (id) (window as any).confirmSession(id);
+        });
+      });
+
+      container.querySelectorAll<HTMLElement>('[data-action="markAbsentSession"]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.sessionId;
+          if (id) (window as any).markAbsentSession(id);
+        });
+      });
+
+      container.querySelectorAll<HTMLElement>('[data-action="openPaymentSheet"]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const patientId = btn.dataset.patientId;
+          if (patientId) {
+            window.dispatchEvent(new CustomEvent('openPaymentSheet', { detail: { patientId } }));
+          }
+        });
+      });
+
+      container.querySelectorAll<HTMLElement>('[data-action="renewSubscription"]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const patientId = btn.dataset.patientId;
+          const totalSessions = parseInt(btn.dataset.totalSessions || '10', 10);
+          const patientName = btn.dataset.patientName || '';
+          if (patientId) (window as any).renewSubscription(patientId, totalSessions, patientName);
+        });
+      });
+
+      container.querySelectorAll<HTMLElement>('[data-action="dismissSubscriptionWarning"]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const patientId = btn.dataset.patientId;
+          if (patientId) (window as any).dismissSubscriptionWarning(patientId);
+        });
+      });
+
+      container.querySelectorAll<HTMLElement>('[data-action="cancelGroupSession"]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          const ids = btn.dataset.memberIds;
+          if (ids) (window as any).cancelGroupSession(ids);
+        });
+      });
+
+      container.querySelectorAll<HTMLElement>('[data-action="deleteGroupSession"]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          const ids = btn.dataset.memberIds;
+          if (ids) (window as any).deleteGroupSession(ids);
+        });
+      });
+
+      container.querySelectorAll<HTMLElement>('[data-action="openAddSession"]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const time = btn.dataset.time;
+          const date = btn.dataset.date;
+          window.dispatchEvent(new CustomEvent('openAddSession', {
+            detail: { time, date, showDateTime: false }
+          }));
+        });
+      });
+
+      container.querySelectorAll<HTMLElement>('[data-action="callPhone"]').forEach((link) => {
+        link.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const href = link.getAttribute('href') || '';
+          if (!isAllowedUrl(href)) {
+            e.preventDefault();
+            (window as any).showToast?.('Numărul de telefon nu este valid.', 'warning');
+          }
+        });
+      });
+
+      container.querySelectorAll<HTMLElement>('[data-action="openDriveLink"]').forEach((link) => {
+        link.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const raw = link.dataset.driveLink || '';
+          if (!raw || !isAllowedUrl(raw)) {
+            e.preventDefault();
+            (window as any).showToast?.('Pacientul nu are un link de dosar/Drive salvat.', 'info');
+          }
+        });
+      });
+
+      container.querySelectorAll<HTMLElement>('[data-action="toggleGroupExpand"]').forEach((surface) => {
+        surface.addEventListener('click', (e) => {
+          const target = e.target as HTMLElement;
+          if (target.closest('button, a, [data-action]')) return;
+          const card = surface.closest('session-card');
+          if (card) card.classList.toggle('expanded');
+        });
+      });
     }
 
     async function renderTimeline() {
@@ -764,8 +915,8 @@ Astro.response.headers.set('Cache-Control', 'private, max-age=30, must-revalidat
           const safeName = escapeHtml(m.patientName);
           const actionButtons = (m.status === 'programat')
             ? `<div class="flex gap-2 mt-2">
-                <button type="button" class="flex-1 py-2 rounded-xl ${isGhimbav ? 'bg-brand-primary text-black' : 'bg-brand-secondary text-white'} text-[10px] font-black uppercase tracking-wider active:scale-95 transition-transform" onclick="event.stopPropagation(); window.confirmSession('${m.id}')">Confirmă</button>
-                <button type="button" class="flex-1 py-2 rounded-xl bg-neutral-100 text-neutral-700 text-[10px] font-black uppercase tracking-wider active:scale-95 transition-transform" onclick="event.stopPropagation(); window.markAbsentSession('${m.id}')">Nu a venit</button>
+                <button type="button" class="flex-1 py-2 rounded-xl ${isGhimbav ? 'bg-brand-primary text-black' : 'bg-brand-secondary text-white'} text-[10px] font-black uppercase tracking-wider active:scale-95 transition-transform" data-action="confirmSession" data-session-id="${escapeHtml(m.id)}">Confirmă</button>
+                <button type="button" class="flex-1 py-2 rounded-xl bg-neutral-100 text-neutral-700 text-[10px] font-black uppercase tracking-wider active:scale-95 transition-transform" data-action="markAbsentSession" data-session-id="${escapeHtml(m.id)}">Nu a venit</button>
                </div>`
             : '';
           return `
@@ -788,27 +939,29 @@ Astro.response.headers.set('Cache-Control', 'private, max-age=30, must-revalidat
           <session-card class="group-session-card block relative rounded-[2.5rem] shadow-sm overflow-hidden" data-group-id="${group.groupId}" data-group-member-ids="${memberIds}">
             <div class="absolute inset-0 bg-neutral-100 flex items-center justify-end px-6 z-0">
               <div class="flex items-center gap-3" data-action-area>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   data-action-btn
+                  data-action="cancelGroupSession"
+                  data-member-ids="${escapeHtml(memberIds)}"
                   class="relative z-20 w-12 h-12 rounded-full bg-orange-500 shadow-sm text-white flex items-center justify-center active:scale-95 transition-transform"
-                  onclick="event.stopPropagation(); event.preventDefault(); window.cancelGroupSession('${memberIds}');"
                   title="Marchează grupul ca Anulat/Absent"
                 >
                   <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
                 </button>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   data-action-btn
+                  data-action="deleteGroupSession"
+                  data-member-ids="${escapeHtml(memberIds)}"
                   class="relative z-20 w-12 h-12 rounded-full bg-red-500 shadow-sm text-white flex items-center justify-center active:scale-95 transition-transform"
-                  onclick="event.stopPropagation(); event.preventDefault(); window.deleteGroupSession('${memberIds}');"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 </button>
               </div>
             </div>
 
-            <div class="swipe-surface relative z-10 w-full h-full rounded-[2.5rem] overflow-hidden transition-transform duration-300 will-change-transform ${cardClasses} cursor-pointer active:scale-[0.98]" onclick="this.closest('session-card').classList.toggle('expanded')">
+            <div class="swipe-surface relative z-10 w-full h-full rounded-[2.5rem] overflow-hidden transition-transform duration-300 will-change-transform ${cardClasses} cursor-pointer active:scale-[0.98]" data-action="toggleGroupExpand">
               <div class="p-6">
                 <div class="flex items-center justify-between mb-5">
                   <div class="min-w-0">
@@ -861,7 +1014,9 @@ Astro.response.headers.set('Cache-Control', 'private, max-age=30, must-revalidat
                 <button
                   type="button"
                   class="w-full h-12 rounded-2xl border-2 border-dashed border-neutral-200 flex items-center justify-center text-neutral-400 text-sm font-bold hover:border-brand-primary hover:text-brand-primary hover:bg-brand-primary/5 transition-colors active:scale-[0.98]"
-                  onclick="window.dispatchEvent(new CustomEvent('openAddSession', { detail: { time: '${firstLunchSlot}', date: currentCalendarDate, showDateTime: false } }))"
+                  data-action="openAddSession"
+                  data-time="${escapeHtml(firstLunchSlot)}"
+                  data-date="${escapeHtml(currentCalendarDate)}"
                 >
                   + Adaugă ședință
                 </button>
@@ -894,7 +1049,9 @@ Astro.response.headers.set('Cache-Control', 'private, max-age=30, must-revalidat
               <button
                 type="button"
                 class="w-full h-12 rounded-2xl border-2 border-dashed border-neutral-200 flex items-center justify-center text-neutral-400 text-sm font-bold hover:border-brand-primary hover:text-brand-primary hover:bg-brand-primary/5 transition-colors active:scale-[0.98]"
-                onclick="window.dispatchEvent(new CustomEvent('openAddSession', { detail: { time: '${slotTimeStr}', date: currentCalendarDate, showDateTime: false } }))"
+                data-action="openAddSession"
+                data-time="${escapeHtml(slotTimeStr)}"
+                data-date="${escapeHtml(currentCalendarDate)}"
               >
                 + Adaugă ședință
               </button>
@@ -902,6 +1059,8 @@ Astro.response.headers.set('Cache-Control', 'private, max-age=30, must-revalidat
           </div>
         `;
       }).join('');
+
+      bindTimelineEvents(container);
     }
 
     if ((window as any)._calendarSessionsHandler) {
