@@ -980,7 +980,7 @@ while (upcomingDates.length < 14 && dayCounter < 30) {
       }
 
       // Check Lunch Break overlap from dynamic settings
-      const currentSettings = await getSettings();
+      const currentSettings = (await getSettings()) as any;
       const selectedDateObj = new Date(selectedDate + 'T00:00:00');
       const selectedDayOfWeek = selectedDateObj.getDay();
       const dayKey = String(selectedDayOfWeek);

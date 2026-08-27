@@ -107,7 +107,7 @@ export async function addPatient(input: {
   const nume    = parts.slice(1).join(' '); // Rămâne gol dacă este un singur cuvânt, NU se duplică prenumele
 
   // Verificare nume duplicat (inclusiv inversat, ex. "Popa Diana" vs "Diana Popa")
-  const { data: existing } = await supabase
+  const { data: existing } = await (supabase as any)
     .from('pacienti_view')
     .select('id, name')
     .or(`name.ilike.${nameTrimmed},name.ilike.${nameReversed}`);
@@ -156,7 +156,7 @@ export async function updatePatient(id: string, updates: PacientUpdate & { name?
     const nameReversed = nameTrimmed.split(/\s+/).reverse().join(' ');
     
     // Check duplicate name on edit (excluding current patient id, but checking both normal and reversed)
-    const { data: existing } = await supabase
+    const { data: existing } = await (supabase as any)
       .from('pacienti_view')
       .select('id, name')
       .neq('id', id)

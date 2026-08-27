@@ -600,7 +600,7 @@ const currentSectionInfo = section && sectionTitles[section] ? sectionTitles[sec
     const toast = document.getElementById('settings-toast');
     const toastMessage = document.getElementById('toast-message');
 
-    function showToast(msg: string) {
+    function showToast(msg: string, type?: string) {
       if (!toast || !toastMessage) return;
       toastMessage.textContent = msg;
       toast.classList.remove('opacity-0', '-translate-y-4');
