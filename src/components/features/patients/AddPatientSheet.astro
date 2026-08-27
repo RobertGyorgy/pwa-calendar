@@ -531,15 +531,24 @@
         return;
       }
 
+      const phoneInput = (this.form?.querySelector('[name="phone"]') || document.getElementById('patientPhone')) as HTMLInputElement | null;
+      const phoneVal = phoneInput ? phoneInput.value.trim() : ((formData.get('phone') as string) || '').trim();
+
+      const driveInput = (this.form?.querySelector('[name="driveLink"]') || document.getElementById('patientDriveLink')) as HTMLInputElement | null;
+      const driveVal = driveInput ? driveInput.value.trim() : ((formData.get('driveLink') as string) || '').trim();
+
+      const nameInput = (this.form?.querySelector('[name="name"]') || document.getElementById('patientName')) as HTMLInputElement | null;
+      const nameVal = nameInput ? nameInput.value.trim() : (patientName || '').trim();
+
       const payload = {
-        name: patientName,
-        telefon: (formData.get('phone') as string) || '',
+        name: nameVal,
+        telefon: phoneVal,
         plan: (formData.get('plan') as any) || 'Abonament',
         locatie: (formData.get('location') as any) || 'Belaqva',
         cost: formData.get('cost') ? Number(formData.get('cost')) : 0,
         sedinte_total: formData.get('totalSessions') ? Number(formData.get('totalSessions')) : 10,
         achitat: paymentStatus === 'Achitat' || paymentStatus === 'Paid fully' || paymentStatus === 'Paid',
-        drive_link: (formData.get('driveLink') as string) || '',
+        drive_link: driveVal,
       };
 
       try {
