@@ -110,7 +110,7 @@ ON CONFLICT (id) DO NOTHING;
 
 
 -- ============================================================
--- 2. SETTINGS — configurare aplicație (singleton: 1 singur rând)
+-- 2. SETTINGS — configurare aplicație (un rând per utilizator)
 -- ============================================================
 CREATE TABLE public.settings (
   id                      UUID           PRIMARY KEY DEFAULT gen_random_uuid(),
