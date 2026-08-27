@@ -124,7 +124,7 @@ const currentSectionInfo = section && sectionTitles[section] ? sectionTitles[sec
           <div class="bg-surface-card text-text-main rounded-[2.5rem] p-6 shadow-sm border border-transparent space-y-4">
             <div class="flex items-center justify-between gap-3">
               <h3 class="text-lg sm:text-xl font-bold text-text-main">Notificări telefon</h3>
-              <span id="notification-status-badge" class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300">Inactiv</span>
+              <span id="notification-status-badge" class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-100 text-amber-800">Inactiv</span>
             </div>
             <button
               type="button"
@@ -159,11 +159,11 @@ const currentSectionInfo = section && sectionTitles[section] ? sectionTitles[sec
               <div class="flex items-center justify-center gap-4 pt-1">
                 <div class="flex items-center gap-1.5">
                   <span class="w-3 h-3 rounded-full bg-brand-secondary"></span>
-                  <span class="text-[11px] font-bold text-text-muted uppercase tracking-wider">Zi activă</span>
+                  <span class="text-[11px] font-black text-black uppercase tracking-wider">Zi activă</span>
                 </div>
                 <div class="flex items-center gap-1.5">
                   <span class="w-3 h-3 rounded-full bg-brand-primary"></span>
-                  <span class="text-[11px] font-bold text-text-muted uppercase tracking-wider">Zi inactivă</span>
+                  <span class="text-[11px] font-black text-black uppercase tracking-wider">Zi inactivă</span>
                 </div>
               </div>
             </div>
@@ -220,90 +220,61 @@ const currentSectionInfo = section && sectionTitles[section] ? sectionTitles[sec
 
       <!-- 3. Formular Pauza de masă -->
       {section === 'break' && (
-        <section class="bg-surface-card rounded-[2.5rem] p-6 shadow-sm border border-transparent space-y-4">
-          <!-- Time Pickers alăturate Pauză (Casete Roz Pal fără border pe Card Alb) -->
-          <div class="grid grid-cols-2 gap-4">
-            <div class="space-y-2">
-              <label for="btn-break-start" class="text-lg sm:text-xl font-black text-text-main font-sans block text-center tracking-tight">Început pauză</label>
-              <div
-                id="btn-break-start"
-                data-time-trigger
-                data-target="break-start"
-                data-label="Început pauză"
-                class="w-full px-4 py-3.5 rounded-2xl bg-brand-secondary/15 hover:bg-brand-secondary/25 text-brand-secondary font-extrabold text-lg sm:text-xl text-center flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95 relative overflow-hidden"
-              >
-                <input
-                  type="text"
-                  id="display-break-start"
-                  value="13:00"
-                  maxlength="5"
-                  inputmode="numeric"
-                  autocomplete="off"
-                  class="tracking-wider w-full bg-transparent text-center focus:outline-none font-extrabold text-lg sm:text-xl text-brand-secondary placeholder-brand-secondary/50"
-                />
+        <div class="space-y-4">
+          <!-- Card 1: Pauză implicită -->
+          <section class="bg-surface-card rounded-[2.5rem] p-6 shadow-sm border border-transparent space-y-4">
+            <label class="text-lg sm:text-xl font-black text-text-main font-sans block text-left tracking-tight">Pauză implicită pe toate zilele</label>
+            
+            <!-- Time Pickers alăturate Pauză (Casete Roz Pal fără border pe Card Alb) -->
+            <div class="grid grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <label for="btn-break-start" class="text-lg sm:text-xl font-black text-text-main font-sans block text-center tracking-tight">Început</label>
+                <div
+                  id="btn-break-start"
+                  data-time-trigger
+                  data-target="break-start"
+                  data-label="Început"
+                  class="w-full px-4 py-3.5 rounded-2xl bg-brand-secondary/15 hover:bg-brand-secondary/25 text-brand-secondary font-extrabold text-lg sm:text-xl text-center flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95 relative overflow-hidden"
+                >
+                  <input
+                    type="text"
+                    id="display-break-start"
+                    value="13:00"
+                    maxlength="5"
+                    inputmode="numeric"
+                    autocomplete="off"
+                    class="tracking-wider w-full bg-transparent text-center focus:outline-none font-extrabold text-lg sm:text-xl text-brand-secondary placeholder-brand-secondary/50"
+                  />
+                </div>
+                <input type="hidden" id="break-start" name="breakStart" value="13:00" />
               </div>
-              <input type="hidden" id="break-start" name="breakStart" value="13:00" />
-            </div>
-            <div class="space-y-2">
-              <label for="btn-break-end" class="text-lg sm:text-xl font-black text-text-main font-sans block text-center tracking-tight">Sfârșit pauză</label>
-              <div
-                id="btn-break-end"
-                data-time-trigger
-                data-target="break-end"
-                data-label="Sfârșit pauză"
-                class="w-full px-4 py-3.5 rounded-2xl bg-brand-secondary/15 hover:bg-brand-secondary/25 text-brand-secondary font-extrabold text-lg sm:text-xl text-center flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95 relative overflow-hidden"
-              >
-                <input
-                  type="text"
-                  id="display-break-end"
-                  value="14:00"
-                  maxlength="5"
-                  inputmode="numeric"
-                  autocomplete="off"
-                  class="tracking-wider w-full bg-transparent text-center focus:outline-none font-extrabold text-lg sm:text-xl text-brand-secondary placeholder-brand-secondary/50"
-                />
+              <div class="space-y-2">
+                <label for="btn-break-end" class="text-lg sm:text-xl font-black text-text-main font-sans block text-center tracking-tight">Sfârșit</label>
+                <div
+                  id="btn-break-end"
+                  data-time-trigger
+                  data-target="break-end"
+                  data-label="Sfârșit"
+                  class="w-full px-4 py-3.5 rounded-2xl bg-brand-secondary/15 hover:bg-brand-secondary/25 text-brand-secondary font-extrabold text-lg sm:text-xl text-center flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95 relative overflow-hidden"
+                >
+                  <input
+                    type="text"
+                    id="display-break-end"
+                    value="14:00"
+                    maxlength="5"
+                    inputmode="numeric"
+                    autocomplete="off"
+                    class="tracking-wider w-full bg-transparent text-center focus:outline-none font-extrabold text-lg sm:text-xl text-brand-secondary placeholder-brand-secondary/50"
+                  />
+                </div>
+                <input type="hidden" id="break-end" name="breakEnd" value="14:00" />
               </div>
-              <input type="hidden" id="break-end" name="breakEnd" value="14:00" />
             </div>
-          </div>
+          </section>
 
-          <!-- Pauză de masă preseturi rapide -->
-          <div class="pt-2">
-            <div class="text-xs font-extrabold text-text-muted font-sans uppercase tracking-wider mb-2 text-center">Preseturi rapide</div>
-            <div class="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                data-lunch-preset
-                data-start="12:00"
-                data-end="12:30"
-                class="py-2.5 px-1 rounded-xl text-xs sm:text-sm font-bold transition-all text-center truncate bg-black/5 text-text-muted hover:text-black hover:bg-brand-secondary/20 active:scale-95"
-              >
-                12:00 – 12:30
-              </button>
-              <button
-                type="button"
-                data-lunch-preset
-                data-start="12:30"
-                data-end="13:00"
-                class="py-2.5 px-1 rounded-xl text-xs sm:text-sm font-bold transition-all text-center truncate bg-black/5 text-text-muted hover:text-black hover:bg-brand-secondary/20 active:scale-95"
-              >
-                12:30 – 13:00
-              </button>
-              <button
-                type="button"
-                data-lunch-preset
-                data-start="13:00"
-                data-end="13:30"
-                class="py-2.5 px-1 rounded-xl text-xs sm:text-sm font-bold transition-all text-center truncate bg-black/5 text-text-muted hover:text-black hover:bg-brand-secondary/20 active:scale-95"
-              >
-                13:00 – 13:30
-              </button>
-            </div>
-          </div>
-
-          <!-- Pauze personalizate pe zile -->
-          <div class="pt-6 mt-6 border-t border-black/5 space-y-6">
-            <label class="text-lg sm:text-xl font-black text-text-main font-sans block text-left tracking-tight">Pauze pe zile</label>
+          <!-- Card 2: Pauze personalizate pe zile -->
+          <section class="bg-surface-card rounded-[2.5rem] p-6 shadow-sm border border-transparent space-y-6">
+            <label class="text-lg sm:text-xl font-black text-text-main font-sans block text-left tracking-tight">Pauze personalizate</label>
 
             <!-- Day chips -->
             <div id="break-days-container" class="grid grid-cols-5 gap-2 text-center">
@@ -318,23 +289,23 @@ const currentSectionInfo = section && sectionTitles[section] ? sectionTitles[sec
             <div class="flex items-center justify-center gap-4">
               <div class="flex items-center gap-1.5">
                 <span class="w-3 h-3 rounded-full bg-brand-secondary shadow-sm shadow-brand-secondary/30"></span>
-                <span class="text-[11px] font-bold text-text-muted uppercase tracking-wider">Pauză Activă</span>
+                <span class="text-[11px] font-black text-black uppercase tracking-wider">Pauză Activă</span>
               </div>
               <div class="flex items-center gap-1.5">
                 <span class="w-3 h-3 rounded-full bg-brand-primary shadow-sm"></span>
-                <span class="text-[11px] font-bold text-text-muted uppercase tracking-wider">Fără Pauză</span>
+                <span class="text-[11px] font-black text-black uppercase tracking-wider">Fără Pauză</span>
               </div>
             </div>
 
             <!-- Time pickers for selected break days (same style as work schedule) -->
             <div class="grid grid-cols-2 gap-4">
               <div class="space-y-2">
-                <label for="btn-break-day-start" class="text-lg sm:text-xl font-black text-text-main font-sans block text-center tracking-tight">Început pauză</label>
+                <label for="btn-break-day-start" class="text-lg sm:text-xl font-black text-text-main font-sans block text-center tracking-tight">Început</label>
                 <div
                   id="btn-break-day-start"
                   data-time-trigger
                   data-target="break-day-start"
-                  data-label="Început pauză zile selectate"
+                  data-label="Început"
                   class="w-full px-4 py-3.5 rounded-2xl bg-brand-secondary/15 hover:bg-brand-secondary/25 text-brand-secondary font-extrabold text-lg sm:text-xl text-center flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95 relative overflow-hidden"
                 >
                   <input
@@ -350,12 +321,12 @@ const currentSectionInfo = section && sectionTitles[section] ? sectionTitles[sec
                 <input type="hidden" id="break-day-start" name="breakDayStart" value="13:00" />
               </div>
               <div class="space-y-2">
-                <label for="btn-break-day-end" class="text-lg sm:text-xl font-black text-text-main font-sans block text-center tracking-tight">Sfârșit pauză</label>
+                <label for="btn-break-day-end" class="text-lg sm:text-xl font-black text-text-main font-sans block text-center tracking-tight">Sfârșit</label>
                 <div
                   id="btn-break-day-end"
                   data-time-trigger
                   data-target="break-day-end"
-                  data-label="Sfârșit pauză zile selectate"
+                  data-label="Sfârșit"
                   class="w-full px-4 py-3.5 rounded-2xl bg-brand-secondary/15 hover:bg-brand-secondary/25 text-brand-secondary font-extrabold text-lg sm:text-xl text-center flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95 relative overflow-hidden"
                 >
                   <input
@@ -371,9 +342,8 @@ const currentSectionInfo = section && sectionTitles[section] ? sectionTitles[sec
                 <input type="hidden" id="break-day-end" name="breakDayEnd" value="14:00" />
               </div>
             </div>
-          </div>
-
-        </section>
+          </section>
+        </div>
       )}
 
       <!-- 4. Formular Ședințe & pachete -->
@@ -818,15 +788,15 @@ const currentSectionInfo = section && sectionTitles[section] ? sectionTitles[sec
         if (btnTestNotif) (btnTestNotif as HTMLButtonElement).disabled = true;
       } else if (subscribed) {
         notifBadge.textContent = 'Activ';
-        notifBadge.className = 'px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-emerald-100 text-emerald-700 border border-emerald-300';
+        notifBadge.className = 'px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-emerald-100 text-emerald-700';
         if (btnTestNotifText) btnTestNotifText.textContent = 'Dezactivează';
       } else if (Notification.permission === 'denied') {
         notifBadge.textContent = 'Blocate';
-        notifBadge.className = 'px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-rose-100 text-rose-700 border border-rose-300';
+        notifBadge.className = 'px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-rose-100 text-rose-700';
         if (btnTestNotifText) btnTestNotifText.textContent = 'Blocate';
       } else {
         notifBadge.textContent = 'Inactiv';
-        notifBadge.className = 'px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300';
+        notifBadge.className = 'px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-100 text-amber-800';
         if (btnTestNotifText) btnTestNotifText.textContent = 'Activează';
       }
     }
@@ -1114,31 +1084,6 @@ const currentSectionInfo = section && sectionTitles[section] ? sectionTitles[sec
       });
     });
 
-    // Pauză de masă preseturi rapide: update + salvare + notificare componente
-    document.querySelectorAll('[data-lunch-preset]').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        const start = btn.getAttribute('data-start');
-        const end = btn.getAttribute('data-end');
-        if (!start || !end || !inputBreakStart || !inputBreakEnd || !displayBreakStart || !displayBreakEnd) return;
-
-        inputBreakStart.value = start;
-        inputBreakEnd.value = end;
-        displayBreakStart.value = start;
-        displayBreakEnd.value = end;
-
-        try {
-          const saved = await saveSettingsDB({ lunch_start: start, lunch_end: end });
-          if (saved) {
-            setSettingsCache(saved);
-            window.dispatchEvent(new CustomEvent('settingsUpdated', { detail: saved }));
-          }
-          showToast('Pauza de masă a fost actualizată');
-        } catch (err: any) {
-          showToast('Eroare la salvare: ' + (err?.message || 'necunoscută'));
-          console.error(err);
-        }
-      });
-    });
 
     // Editable time inputs: parse & validate direct typing (e.g. 1200 -> 12:00)
     function parseTypedTime(raw: string): string | null {

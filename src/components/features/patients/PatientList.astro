@@ -391,7 +391,8 @@
         }
 
         const attendanceCount = patient.sedinte_folosite || 0;
-        const totalSessions = patient.sedinte_total || 10;
+        // ✅ FIX: fallback la 1 în loc de 10 pentru a nu arăta date gresite la Şdință unică
+        const totalSessions = patient.sedinte_total || 1;
         let progressPercentage = Math.min(100, Math.round((attendanceCount / totalSessions) * 100));
 
         const isFullyPaid = paymentStatus === 'Achitat integral' || paymentStatus === 'Achitat' || patient.achitat === true || (costTotal > 0 && sumaIncasata >= costTotal);

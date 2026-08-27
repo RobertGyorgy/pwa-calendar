@@ -462,7 +462,8 @@
       const isGhimbav = locationStr.toLowerCase() === "ghimbav";
       const cardClasses = isGhimbav ? "bg-brand-secondary text-white" : "bg-brand-primary text-black";
       const count = session.attendanceCount ?? 0;
-      const totalSess = session.totalSessions || 10;
+      // ✅ FIX: fallback la 1 (nu 10) pentru Şdință unică
+      const totalSess = session.totalSessions || 1;
       const isTerminat = session.subscriptionDone || (totalSess > 0 && count >= totalSess);
       const displayCount = isTerminat ? totalSess : count;
       const progressPercentage = isTerminat ? 100 : (totalSess > 0 ? Math.min(100, Math.round((count / totalSess) * 100)) : 0);
@@ -718,7 +719,8 @@
         const sumaIncasata = await getPatientPayments(a.pacient_id);
         const costTotal = Number(a.pacienti?.cost || 0);
         const folosite = a.pacienti?.sedinte_folosite ?? 0;
-        const totalSess = a.pacienti?.sedinte_total || 10;
+        // ✅ FIX: fallback la 1 (nu 10) pentru Şdință unică
+        const totalSess = a.pacienti?.sedinte_total || 1;
         const sedinteRamase = Math.max(0, totalSess - folosite);
         const costPerSession = totalSess > 0 ? (costTotal / totalSess) : costTotal;
 

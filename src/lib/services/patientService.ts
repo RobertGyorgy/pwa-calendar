@@ -250,20 +250,21 @@ export async function resetPatientSubscription(
   paymentOption: { status: 'Neachitat' | 'Parțial' | 'Achitat'; paidAmount?: number } | boolean = false
 ): Promise<void> {
   const current = await getPatient(id);
+  // ✅ FIX: costul noului abonament ÎNLOCUIEȘTE costul vechi, nu se acumulează
   const nextTotal = newTotalSessions ?? (current.sedinte_total || 10);
-  const nextCost = (current.cost || 0) + newCostTotal;
+  const nextCost = newCostTotal > 0 ? newCostTotal : (current.cost || 0);
 
   let isAchitat = false;
   let amountToAdd = 0;
 
   if (typeof paymentOption === 'boolean') {
     if (paymentOption) {
-      amountToAdd = newCostTotal;
+      amountToAdd = nextCost;
       isAchitat = true;
     }
   } else if (paymentOption) {
     if (paymentOption.status === 'Achitat') {
-      amountToAdd = newCostTotal;
+      amountToAdd = nextCost;
       isAchitat = true;
     } else if (paymentOption.status === 'Parțial') {
       amountToAdd = paymentOption.paidAmount || 0;
@@ -273,6 +274,14 @@ export async function resetPatientSubscription(
 
   // Reînnoirea înseamnă un pachet nou: resetăm contorul de ședințe folosite la 0
   // și setăm noul total. Istoricul programărilor rămâne în DB.
+  // ✅ FIX: ștergem și plățile vechi la reînnoire (abonament nou = calcule noi)
+  try {
+    await (supabase as any).from('plati').delete().eq('pacient_id', id);
+  } catch (e) { console.warn('Eroare ștergere plăți la reînnoire:', e); }
+  if (typeof window !== 'undefined') {
+    try { localStorage.removeItem(`kineto_plati_${id}`); } catch (e) {}
+  }
+
   const { error } = await (supabase as any)
     .from('pacienti')
     .update({
