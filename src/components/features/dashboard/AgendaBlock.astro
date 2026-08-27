@@ -427,33 +427,36 @@
       return;
     }
 
-    const getSessionCategory = (session: any) => {
+    const getSessionEndTime = (session: any) => {
       const timeStr = session.selectedTime || "08:00";
-      const timeParts = timeStr.split(':');
-      const hourNum = parseInt(timeParts[0] || "0", 10);
-      const minute = timeParts[1] || "00";
-      const endTime = `${(hourNum + 1).toString().padStart(2, '0')}:${minute}`;
+      const [hRaw, mRaw] = timeStr.split(':');
+      const h = parseInt(hRaw || "8", 10);
+      const m = parseInt(mRaw || "0", 10);
+      const totalStartMin = (isNaN(h) ? 8 : h) * 60 + (isNaN(m) ? 0 : m);
+      const totalEndMin = totalStartMin + currentSessionDuration;
+      const endH = Math.floor(totalEndMin / 60);
+      const endM = totalEndMin % 60;
+      return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
+    };
 
-      const isOngoing = isToday && nowStr >= timeStr && nowStr < endTime;
-      const isPast = currentAgendaDate < todayStr || (isToday && nowStr >= endTime);
+    const isSessionPast = (session: any) => {
+      if (currentAgendaDate < todayStr) return true;
+      if (currentAgendaDate > todayStr) return false;
+      return nowStr >= getSessionEndTime(session);
+    };
 
-      if (isOngoing) return 0;
-      if (!isPast) return 1;
-      return 2;
+    const sortByTime = (a: any, b: any) => {
+      const timeA = a.selectedTime || "08:00";
+      const timeB = b.selectedTime || "08:00";
+      return timeA.localeCompare(timeB);
     };
 
     const items = groupAgendaSessions(sessions);
 
-    const sorted = [...items].sort((a: any, b: any) => {
-      const catA = getSessionCategory(a);
-      const catB = getSessionCategory(b);
-      if (catA !== catB) return catA - catB;
-      const timeA = a.selectedTime || "08:00";
-      const timeB = b.selectedTime || "08:00";
-      return timeA.localeCompare(timeB);
-    });
+    const futureItems = items.filter((s: any) => !isSessionPast(s)).sort(sortByTime);
+    const pastItems = items.filter((s: any) => isSessionPast(s)).sort(sortByTime);
 
-    list.innerHTML = sorted.map((item: any) => {
+    const renderAgendaItem = (item: any) => {
       if (item.isGroup) {
         return createGroupCardHTML(item);
       }
@@ -483,7 +486,7 @@
       const totalEndMin = totalStartMin + currentSessionDuration;
       const endH = Math.floor(totalEndMin / 60);
       const endM = totalEndMin % 60;
-      const formattedStart = `${startH}:${startM.toString().padStart(2, '0')}`;
+      const formattedStart = `${startH.toString().padStart(2, '0')}:${startM.toString().padStart(2, '0')}`;
       const formattedEnd = `${endH}:${endM.toString().padStart(2, '0')}`;
       const timeRangeText = `${formattedStart} - ${formattedEnd}`;
 
@@ -663,7 +666,19 @@
           </div>
         </session-card>
       `;
-    }).join('');
+    };
+
+    const futureHTML = futureItems.map(renderAgendaItem).join('');
+    const pastHTML = pastItems.map(renderAgendaItem).join('');
+    const separatorHTML = futureItems.length > 0 && pastItems.length > 0
+      ? `<div class="flex items-center gap-3 py-4">
+           <div class="h-px flex-1 bg-black/10"></div>
+           <span class="text-xs font-black uppercase tracking-wider text-text-muted">Istoric azi</span>
+           <div class="h-px flex-1 bg-black/10"></div>
+         </div>`
+      : '';
+
+    list.innerHTML = futureHTML + separatorHTML + pastHTML;
   }
 
   async function renderAgendaBlock() {
