@@ -184,9 +184,9 @@ const currentSectionInfo = section && sectionTitles[section] ? sectionTitles[sec
                     id="display-work-start"
                     value="08:00"
                     maxlength="5"
-                    inputmode="numeric"
+                    readonly
                     autocomplete="off"
-                    class="tracking-wider w-full bg-transparent text-center focus:outline-none font-extrabold text-lg sm:text-xl"
+                    class="tracking-wider w-full bg-transparent text-center focus:outline-none font-extrabold text-lg sm:text-xl cursor-pointer pointer-events-none"
                   />
                 </div>
                 <input type="hidden" id="work-start" name="workStart" value="08:00" />
@@ -205,9 +205,9 @@ const currentSectionInfo = section && sectionTitles[section] ? sectionTitles[sec
                     id="display-work-end"
                     value="19:00"
                     maxlength="5"
-                    inputmode="numeric"
+                    readonly
                     autocomplete="off"
-                    class="tracking-wider w-full bg-transparent text-center focus:outline-none font-extrabold text-lg sm:text-xl"
+                    class="tracking-wider w-full bg-transparent text-center focus:outline-none font-extrabold text-lg sm:text-xl cursor-pointer pointer-events-none"
                   />
                 </div>
                 <input type="hidden" id="work-end" name="workEnd" value="19:00" />
@@ -241,9 +241,9 @@ const currentSectionInfo = section && sectionTitles[section] ? sectionTitles[sec
                     id="display-break-start"
                     value="13:00"
                     maxlength="5"
-                    inputmode="numeric"
+                    readonly
                     autocomplete="off"
-                    class="tracking-wider w-full bg-transparent text-center focus:outline-none font-extrabold text-lg sm:text-xl text-brand-secondary placeholder-brand-secondary/50"
+                    class="tracking-wider w-full bg-transparent text-center focus:outline-none font-extrabold text-lg sm:text-xl text-brand-secondary placeholder-brand-secondary/50 cursor-pointer pointer-events-none"
                   />
                 </div>
                 <input type="hidden" id="break-start" name="breakStart" value="13:00" />
@@ -262,9 +262,9 @@ const currentSectionInfo = section && sectionTitles[section] ? sectionTitles[sec
                     id="display-break-end"
                     value="14:00"
                     maxlength="5"
-                    inputmode="numeric"
+                    readonly
                     autocomplete="off"
-                    class="tracking-wider w-full bg-transparent text-center focus:outline-none font-extrabold text-lg sm:text-xl text-brand-secondary placeholder-brand-secondary/50"
+                    class="tracking-wider w-full bg-transparent text-center focus:outline-none font-extrabold text-lg sm:text-xl text-brand-secondary placeholder-brand-secondary/50 cursor-pointer pointer-events-none"
                   />
                 </div>
                 <input type="hidden" id="break-end" name="breakEnd" value="14:00" />
@@ -313,9 +313,9 @@ const currentSectionInfo = section && sectionTitles[section] ? sectionTitles[sec
                     id="display-break-day-start"
                     value="13:00"
                     maxlength="5"
-                    inputmode="numeric"
+                    readonly
                     autocomplete="off"
-                    class="tracking-wider w-full bg-transparent text-center focus:outline-none font-extrabold text-lg sm:text-xl text-brand-secondary placeholder-brand-secondary/50"
+                    class="tracking-wider w-full bg-transparent text-center focus:outline-none font-extrabold text-lg sm:text-xl text-brand-secondary placeholder-brand-secondary/50 cursor-pointer pointer-events-none"
                   />
                 </div>
                 <input type="hidden" id="break-day-start" name="breakDayStart" value="13:00" />
@@ -334,9 +334,9 @@ const currentSectionInfo = section && sectionTitles[section] ? sectionTitles[sec
                     id="display-break-day-end"
                     value="14:00"
                     maxlength="5"
-                    inputmode="numeric"
+                    readonly
                     autocomplete="off"
-                    class="tracking-wider w-full bg-transparent text-center focus:outline-none font-extrabold text-lg sm:text-xl text-brand-secondary placeholder-brand-secondary/50"
+                    class="tracking-wider w-full bg-transparent text-center focus:outline-none font-extrabold text-lg sm:text-xl text-brand-secondary placeholder-brand-secondary/50 cursor-pointer pointer-events-none"
                   />
                 </div>
                 <input type="hidden" id="break-day-end" name="breakDayEnd" value="14:00" />
@@ -1049,14 +1049,10 @@ const currentSectionInfo = section && sectionTitles[section] ? sectionTitles[sec
     }
 
     document.querySelectorAll('[data-time-trigger]').forEach((trigger) => {
-      trigger.addEventListener('click', (e) => {
+      trigger.addEventListener('click', () => {
         const targetId = trigger.getAttribute('data-target');
         const label = trigger.getAttribute('data-label') || 'Alege ora';
         if (!targetId) return;
-
-        // Don't open the modal if the user is tapping directly into the editable time input
-        const input = trigger.querySelector('input[type="text"]') as HTMLInputElement | null;
-        if (input && (input === document.activeElement || e.target === input)) return;
 
         openTimeModal(targetId, label);
       });
