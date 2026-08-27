@@ -253,6 +253,9 @@ export interface PendingWrapUp {
 }
 
 export async function getPendingWrapUps(): Promise<PendingWrapUp[]> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
   const now = new Date();
   const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
@@ -263,6 +266,7 @@ export async function getPendingWrapUps(): Promise<PendingWrapUp[]> {
       id, pacient_id, data, ora,
       pacienti ( prenume, nume )
     `)
+    .eq('user_id', user.id)
     .eq('status', 'programat')
     .lte('data', todayStr)
     .order('data', { ascending: true })
