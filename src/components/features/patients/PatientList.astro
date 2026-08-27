@@ -51,30 +51,59 @@
       margin-left: 0;
     }
   </style>
-  <!-- Filters (Horizontal Swipeable - dynamically synced with Settings -> Categorii) -->
-  <div 
-    id="patient-filters-bar"
-    class="flex gap-2 overflow-x-auto pb-2 scrollbar-none no-scrollbar select-none touch-pan-x cursor-grab active:cursor-grabbing" 
-    style="-webkit-overflow-scrolling: touch; touch-action: pan-x; overscroll-behavior-x: contain;"
-  >
-    <button class="filter-btn active px-5 py-2.5 rounded-full bg-brand-primary text-black font-extrabold text-sm whitespace-nowrap active:scale-95 transition-all shadow-sm shrink-0" data-filter="all">Toți</button>
-    <button class="filter-btn px-5 py-2.5 rounded-full bg-white text-black font-extrabold text-sm whitespace-nowrap border border-black/10 shadow-sm active:scale-95 transition-all shrink-0" data-filter="belaqva">Belaqva</button>
-    <button class="filter-btn px-5 py-2.5 rounded-full bg-white text-black font-extrabold text-sm whitespace-nowrap border border-black/10 shadow-sm active:scale-95 transition-all shrink-0" data-filter="ghimbav">Ghimbav</button>
-    <button class="filter-btn px-5 py-2.5 rounded-full bg-white text-black font-extrabold text-sm whitespace-nowrap border border-black/10 shadow-sm active:scale-95 transition-all shrink-0" data-filter="unpaid">Neachitați</button>
-    <button class="filter-btn px-5 py-2.5 rounded-full bg-white text-black font-extrabold text-sm whitespace-nowrap border border-black/10 shadow-sm active:scale-95 transition-all shrink-0" data-filter="paid">Achitați</button>
-    <button class="filter-btn px-5 py-2.5 rounded-full bg-white text-black font-extrabold text-sm whitespace-nowrap border border-black/10 shadow-sm active:scale-95 transition-all shrink-0" data-filter="expired">Expirați</button>
-  </div>
-
-  <!-- Sort Controls -->
+  <!-- Unified Filter + Sort Trigger -->
   <div class="flex items-center justify-between gap-3">
-    <span class="text-xs font-black text-text-muted uppercase tracking-wider">Sortare</span>
-    <div id="patient-sort-bar" class="flex gap-2">
-      <button class="sort-btn active px-4 py-2 rounded-full bg-brand-primary text-black font-extrabold text-xs whitespace-nowrap active:scale-95 transition-all shadow-sm" data-sort="name">Nume</button>
-      <button class="sort-btn px-4 py-2 rounded-full bg-white text-black font-extrabold text-xs whitespace-nowrap border border-black/10 shadow-sm active:scale-95 transition-all" data-sort="expired">Expirat</button>
-      <button class="sort-btn px-4 py-2 rounded-full bg-white text-black font-extrabold text-xs whitespace-nowrap border border-black/10 shadow-sm active:scale-95 transition-all" data-sort="progress">Progres</button>
-      <button class="sort-btn px-4 py-2 rounded-full bg-white text-black font-extrabold text-xs whitespace-nowrap border border-black/10 shadow-sm active:scale-95 transition-all" data-sort="payment">Plată</button>
+    <button
+      type="button"
+      id="patient-filter-sort-trigger"
+      class="flex items-center gap-2 px-4 py-2.5 rounded-full bg-white border border-black/10 shadow-sm text-sm font-extrabold text-black active:scale-95 transition-all"
+    >
+      <svg class="w-4 h-4 text-black/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+      </svg>
+      <span id="filter-sort-label">Toți · Nume</span>
+      <svg class="w-4 h-4 text-black/60 transition-transform" id="filter-sort-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- Custom Filter + Sort Panel -->
+<div id="patient-filter-sort-overlay" class="fixed inset-0 bg-black/25 z-[105] opacity-0 pointer-events-none transition-opacity duration-300"></div>
+<div id="patient-filter-sort-panel" class="fixed inset-x-0 bottom-0 z-[110] bg-surface-card rounded-t-[2.5rem] p-6 shadow-2xl translate-y-full transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]">
+  <div class="w-12 h-1.5 bg-neutral-300 rounded-full mx-auto mb-6"></div>
+  <h3 class="text-xl font-black text-black mb-5">Filtre & sortare</h3>
+
+  <div class="space-y-6 max-h-[60vh] overflow-y-auto pb-2">
+    <!-- Filters -->
+    <div>
+      <h4 class="text-xs font-black uppercase tracking-wider text-text-muted mb-3">Filtre</h4>
+      <div id="filter-options" class="grid grid-cols-3 gap-2">
+        <button type="button" data-filter="all" class="filter-option-btn px-3 py-2.5 rounded-xl bg-brand-primary text-black font-extrabold text-xs sm:text-sm text-center transition-all active:scale-95">Toți</button>
+        <button type="button" data-filter="belaqva" class="filter-option-btn px-3 py-2.5 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs sm:text-sm text-center transition-all active:scale-95">Belaqva</button>
+        <button type="button" data-filter="ghimbav" class="filter-option-btn px-3 py-2.5 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs sm:text-sm text-center transition-all active:scale-95">Ghimbav</button>
+        <button type="button" data-filter="unpaid" class="filter-option-btn px-3 py-2.5 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs sm:text-sm text-center transition-all active:scale-95">Neachitați</button>
+        <button type="button" data-filter="paid" class="filter-option-btn px-3 py-2.5 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs sm:text-sm text-center transition-all active:scale-95">Achitați</button>
+        <button type="button" data-filter="expired" class="filter-option-btn px-3 py-2.5 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs sm:text-sm text-center transition-all active:scale-95">Expirați</button>
+      </div>
+    </div>
+
+    <!-- Sort -->
+    <div>
+      <h4 class="text-xs font-black uppercase tracking-wider text-text-muted mb-3">Sortare</h4>
+      <div id="sort-options" class="grid grid-cols-2 gap-2">
+        <button type="button" data-sort="name" class="sort-option-btn px-3 py-2.5 rounded-xl bg-brand-primary text-black font-extrabold text-xs sm:text-sm text-center transition-all active:scale-95">Nume</button>
+        <button type="button" data-sort="expired" class="sort-option-btn px-3 py-2.5 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs sm:text-sm text-center transition-all active:scale-95">Expirat</button>
+        <button type="button" data-sort="progress" class="sort-option-btn px-3 py-2.5 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs sm:text-sm text-center transition-all active:scale-95">Progres</button>
+        <button type="button" data-sort="payment" class="sort-option-btn px-3 py-2.5 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs sm:text-sm text-center transition-all active:scale-95">Plată</button>
+      </div>
     </div>
   </div>
+
+  <button type="button" id="patient-filter-sort-close" class="w-full mt-6 py-4 rounded-full bg-brand-primary hover:brightness-105 text-black font-extrabold text-base shadow-md active:scale-95 transition-all">
+    Aplică
+  </button>
 </div>
 
 <div id="patient-list-container" class="space-y-4 pb-32 overflow-x-hidden">
@@ -104,7 +133,6 @@
 
 <script>
   import { getPatients, deletePatient as deletePatientDB, isRenewalDismissed } from '../../../lib/services/patientService';
-  import { getSettings } from '../../../lib/services/settingsService';
   import { escapeHtml, escapeJsString } from '../../../utils/html';
 
   class PatientListManager {
@@ -117,7 +145,6 @@
       this.container = document.getElementById('patient-list-container');
       this.clearOldLocalStorage();
       this.bindEvents();
-      this.loadCategoryFilters();
       this.render();
     }
 
@@ -147,7 +174,6 @@
         });
 
         window.addEventListener('settingsUpdated', async () => {
-          await this.loadCategoryFilters();
           await this.render();
         });
         (window as any)._patientEventsBound = true;
@@ -187,133 +213,103 @@
         });
       }
 
-      // Desktop drag-to-scroll for filters
-      const filtersBar = document.getElementById('patient-filters-bar');
-      if (filtersBar && filtersBar.dataset.dragBound !== 'true') {
-        filtersBar.dataset.dragBound = 'true';
-        let isDown = false;
-        let startX = 0;
-        let scrollLeft = 0;
-
-        filtersBar.addEventListener('mousedown', (e) => {
-          isDown = true;
-          startX = e.pageX - filtersBar.offsetLeft;
-          scrollLeft = filtersBar.scrollLeft;
-        });
-        filtersBar.addEventListener('mouseleave', () => { isDown = false; });
-        filtersBar.addEventListener('mouseup', () => { isDown = false; });
-        filtersBar.addEventListener('mousemove', (e) => {
-          if (!isDown) return;
-          e.preventDefault();
-          const x = e.pageX - filtersBar.offsetLeft;
-          const walk = (x - startX) * 1.5;
-          filtersBar.scrollLeft = scrollLeft - walk;
-        });
-      }
-
-      // Sort buttons
-      const sortBar = document.getElementById('patient-sort-bar');
-      if (sortBar && sortBar.dataset.clickBound !== 'true') {
-        sortBar.dataset.clickBound = 'true';
-        sortBar.addEventListener('click', (e) => {
-          const target = (e.target as HTMLElement).closest('.sort-btn') as HTMLElement;
-          if (!target) return;
-
-          sortBar.querySelectorAll('.sort-btn').forEach(b => {
-            b.classList.remove('active', 'bg-brand-primary');
-            b.classList.add('bg-white', 'border', 'border-black/10');
-          });
-          target.classList.remove('bg-white', 'border', 'border-black/10');
-          target.classList.add('active', 'bg-brand-primary');
-
-          this.currentSort = target.getAttribute('data-sort') || 'name';
-          this.render();
-        });
-      }
+      // Unified filter + sort panel
+      this.bindFilterSortPanel();
     }
 
-    async loadCategoryFilters() {
-      const filtersBar = document.getElementById('patient-filters-bar');
-      if (!filtersBar) return;
+    bindFilterSortPanel() {
+      const trigger = document.getElementById('patient-filter-sort-trigger');
+      const panel = document.getElementById('patient-filter-sort-panel');
+      const overlay = document.getElementById('patient-filter-sort-overlay');
+      const closeBtn = document.getElementById('patient-filter-sort-close');
+      const chevron = document.getElementById('filter-sort-chevron');
+      if (!trigger || !panel || !overlay) return;
 
-      let rawCategories = ['Belaqva', 'Ghimbav', 'Neachitați', 'Achitați'];
-      try {
-        const settings = await getSettings();
-        if (settings?.categories && settings.categories.length > 0) {
-          rawCategories = settings.categories;
+      if (trigger.dataset.bound === 'true') return;
+      trigger.dataset.bound = 'true';
+
+      const openPanel = () => {
+        overlay.classList.remove('opacity-0', 'pointer-events-none');
+        panel.classList.remove('translate-y-full');
+        if (chevron) chevron.style.transform = 'rotate(180deg)';
+        this.updateFilterSortPanelUI();
+      };
+
+      const closePanel = () => {
+        overlay.classList.add('opacity-0', 'pointer-events-none');
+        panel.classList.add('translate-y-full');
+        if (chevron) chevron.style.transform = '';
+      };
+
+      trigger.addEventListener('click', openPanel);
+      overlay.addEventListener('click', closePanel);
+      closeBtn?.addEventListener('click', closePanel);
+
+      // Filter options
+      const filterContainer = document.getElementById('filter-options');
+      filterContainer?.addEventListener('click', (e) => {
+        const target = (e.target as HTMLElement).closest('.filter-option-btn') as HTMLElement;
+        if (!target) return;
+        this.currentFilter = target.getAttribute('data-filter') || 'all';
+        this.updateFilterSortPanelUI();
+      });
+
+      // Sort options
+      const sortContainer = document.getElementById('sort-options');
+      sortContainer?.addEventListener('click', (e) => {
+        const target = (e.target as HTMLElement).closest('.sort-option-btn') as HTMLElement;
+        if (!target) return;
+        this.currentSort = target.getAttribute('data-sort') || 'name';
+        this.updateFilterSortPanelUI();
+      });
+    }
+
+    updateFilterSortPanelUI() {
+      const filterContainer = document.getElementById('filter-options');
+      filterContainer?.querySelectorAll('.filter-option-btn').forEach((btn) => {
+        const isActive = (btn as HTMLElement).getAttribute('data-filter') === this.currentFilter;
+        if (isActive) {
+          btn.classList.remove('bg-white', 'border', 'border-black/10');
+          btn.classList.add('bg-brand-primary', 'text-black');
+        } else {
+          btn.classList.remove('bg-brand-primary', 'text-black');
+          btn.classList.add('bg-white', 'text-black', 'border', 'border-black/10');
         }
-      } catch (e) {
-        console.warn('Eroare încărcare categorii setări:', e);
-      }
-
-      // Filter out any "Toți" from the custom categories list and deduplicate
-      const cleanCategories: string[] = [];
-      const seen = new Set<string>();
-
-      rawCategories.forEach(c => {
-        const trimmed = c.trim();
-        const norm = trimmed.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        if (!trimmed || norm === 'toti' || norm === 'all' || seen.has(norm)) return;
-        seen.add(norm);
-        cleanCategories.push(trimmed);
       });
 
-      // Clear bar completely
-      filtersBar.innerHTML = '';
-
-      // 1. Fixed unique master button: "Toți"
-      const allBtn = document.createElement('button');
-      const isAllActive = this.currentFilter === 'all';
-      allBtn.className = `filter-btn ${isAllActive ? 'active bg-brand-primary text-black' : 'bg-white text-black border border-black/10'} px-5 py-2.5 rounded-full font-extrabold text-sm whitespace-nowrap active:scale-95 transition-all shadow-sm shrink-0 cursor-pointer`;
-      allBtn.setAttribute('data-filter', 'all');
-      allBtn.textContent = 'Toți';
-      filtersBar.appendChild(allBtn);
-
-      // Individual category buttons
-      cleanCategories.forEach(cleanName => {
-        const norm = cleanName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-        let filterVal = norm;
-        if (norm.includes('belaqva') || norm.includes('belaqua')) filterVal = 'belaqva';
-        else if (norm.includes('ghimbav')) filterVal = 'ghimbav';
-        else if (norm.includes('neachitat') || norm.includes('unpaid')) filterVal = 'unpaid';
-        else if (norm.includes('achitat') || norm.includes('paid')) filterVal = 'paid';
-        else filterVal = `custom:${cleanName}`;
-
-        const isActive = this.currentFilter === filterVal;
-        const btn = document.createElement('button');
-        btn.className = `filter-btn ${isActive ? 'active bg-brand-primary text-black' : 'bg-white text-black border border-black/10'} px-5 py-2.5 rounded-full font-extrabold text-sm whitespace-nowrap active:scale-95 transition-all shadow-sm shrink-0 cursor-pointer`;
-        btn.setAttribute('data-filter', filterVal);
-        btn.textContent = cleanName;
-        filtersBar.appendChild(btn);
+      const sortContainer = document.getElementById('sort-options');
+      sortContainer?.querySelectorAll('.sort-option-btn').forEach((btn) => {
+        const isActive = (btn as HTMLElement).getAttribute('data-sort') === this.currentSort;
+        if (isActive) {
+          btn.classList.remove('bg-white', 'border', 'border-black/10');
+          btn.classList.add('bg-brand-primary', 'text-black');
+        } else {
+          btn.classList.remove('bg-brand-primary', 'text-black');
+          btn.classList.add('bg-white', 'text-black', 'border', 'border-black/10');
+        }
       });
 
-      // Fixed "Expirat" filter button
-      const expiredBtn = document.createElement('button');
-      const isExpiredActive = this.currentFilter === 'expired';
-      expiredBtn.className = `filter-btn ${isExpiredActive ? 'active bg-brand-primary text-black' : 'bg-white text-black border border-black/10'} px-5 py-2.5 rounded-full font-extrabold text-sm whitespace-nowrap active:scale-95 transition-all shadow-sm shrink-0 cursor-pointer`;
-      expiredBtn.setAttribute('data-filter', 'expired');
-      expiredBtn.textContent = 'Expirați';
-      filtersBar.appendChild(expiredBtn);
+      this.updateFilterSortLabel();
+    }
 
-      // Bind delegated click handler ONCE on the filtersBar if not already bound
-      if (filtersBar.dataset.clickBound !== 'true') {
-        filtersBar.dataset.clickBound = 'true';
-        filtersBar.addEventListener('click', (e) => {
-          const target = (e.target as HTMLElement).closest('.filter-btn') as HTMLElement;
-          if (!target) return;
-
-          filtersBar.querySelectorAll('.filter-btn').forEach(b => {
-            b.classList.remove('active', 'bg-brand-primary');
-            b.classList.add('bg-white', 'border', 'border-black/10', 'shadow-sm');
-          });
-          target.classList.remove('bg-white', 'border', 'border-black/10');
-          target.classList.add('active', 'bg-brand-primary');
-          
-          this.currentFilter = target.getAttribute('data-filter') || 'all';
-          this.render();
-        });
-      }
+    updateFilterSortLabel() {
+      const label = document.getElementById('filter-sort-label');
+      if (!label) return;
+      const filterLabels: Record<string, string> = {
+        all: 'Toți',
+        belaqva: 'Belaqva',
+        ghimbav: 'Ghimbav',
+        unpaid: 'Neachitați',
+        paid: 'Achitați',
+        expired: 'Expirați'
+      };
+      const sortLabels: Record<string, string> = {
+        name: 'Nume',
+        expired: 'Expirat',
+        progress: 'Progres',
+        payment: 'Plată'
+      };
+      label.textContent = `${filterLabels[this.currentFilter] || 'Toți'} · ${sortLabels[this.currentSort] || 'Nume'}`;
     }
 
     async deletePatient(id: string) {
@@ -671,6 +667,8 @@
           this.container.appendChild(cardWrapper);
         }
       });
+
+      this.updateFilterSortLabel();
     }
   }
 
