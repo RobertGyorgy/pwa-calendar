@@ -499,16 +499,20 @@ export async function deletePatient(id: string) {
 
 // ── Export CSV complet — pacienți + agendă programări ─────────────
 export async function exportPatientsCSV(): Promise<string> {
-  // 1. Preluăm pacienții reali din Supabase
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Trebuie să fii autentificat pentru export.');
+
+  // 1. Preluăm pacienții reali ai userului curent din Supabase
   const patients = await getPatients();
   
-  // 2. Preluăm toate programările reale din Supabase
-  const { data: programari } = await supabase
+  // 2. Preluăm doar programările curente ale userului (excluzând pacienții șterși sau date vechi din alte conturi)
+  const { data: programari } = await (supabase as any)
     .from('programari')
     .select(`
       data, ora, locatie, status, note, motiv,
-      pacienti ( prenume, nume, telefon )
+      pacienti!inner ( prenume, nume, telefon )
     `)
+    .eq('user_id', user.id)
     .order('data', { ascending: false })
     .order('ora', { ascending: true });
 
@@ -540,8 +544,10 @@ export async function exportPatientsCSV(): Promise<string> {
   rows.push(['Data', 'Ora', 'Pacient', 'Telefon', 'Locatie', 'Status Ședință', 'Note / Observații', 'Motiv Anulare/Absență']);
 
   (programari || []).forEach((pr: any) => {
-    const pacientName = pr.pacienti ? (pr.pacienti.prenume === pr.pacienti.nume || !pr.pacienti.nume ? pr.pacienti.prenume : `${pr.pacienti.prenume} ${pr.pacienti.nume}`.trim()) : 'Pacient Necunoscut';
-    const telefon = pr.pacienti?.telefon || '-';
+    if (!pr.pacienti) return; // Doar programările reale ale pacienților existenți
+    const p = pr.pacienti;
+    const pacientName = p ? (p.prenume === p.nume || !p.nume ? p.prenume : `${p.prenume} ${p.nume}`.trim()) : 'Pacient Necunoscut';
+    const telefon = p?.telefon || '-';
     rows.push([
       pr.data,
       pr.ora,
