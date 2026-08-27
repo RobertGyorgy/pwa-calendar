@@ -233,7 +233,7 @@ while (upcomingDates.length < 14 && dayCounter < 30) {
 <div id="custom-date-picker-overlay" data-sheet-root class="fixed inset-0 bg-black/25 z-[105] opacity-0 pointer-events-none transition-opacity duration-300"></div>
 
 <script>
-  import { getSettings } from '../../../utils/settings';
+  import { getSettings } from '../../../lib/services/settingsService';
   import { lockBodyScroll, unlockBodyScroll } from '../../../utils/scrollLock';
 
   import { getPatients, getPatient, addPatient, updatePatient } from '../../../lib/services/patientService';
