@@ -128,7 +128,7 @@
   class PatientListManager {
     container: HTMLElement | null;
     currentSearchQuery: string = '';
-    currentFilter: string = 'all';
+    activeFilters: string[] = ['all'];
     currentSort: string = 'name';
 
     constructor() {
@@ -244,13 +244,13 @@
         }
       });
 
-      // Filter options
+      // Filter options (multi-select toggle)
       const filterContainer = document.getElementById('filter-options');
       filterContainer?.addEventListener('click', (e) => {
         e.stopPropagation();
         const target = (e.target as HTMLElement).closest('.filter-option-btn') as HTMLElement;
         if (!target) return;
-        this.currentFilter = target.getAttribute('data-filter') || 'all';
+        this.toggleFilter(target.getAttribute('data-filter') || 'all');
         this.updateFilterSortPanelUI();
         this.render();
         closePanel();
@@ -269,10 +269,28 @@
       });
     }
 
+    toggleFilter(filter: string) {
+      if (filter === 'all') {
+        this.activeFilters = ['all'];
+        return;
+      }
+
+      let next = new Set(this.activeFilters);
+      next.delete('all');
+
+      if (next.has(filter)) {
+        next.delete(filter);
+      } else {
+        next.add(filter);
+      }
+
+      this.activeFilters = next.size > 0 ? Array.from(next) : ['all'];
+    }
+
     updateFilterSortPanelUI() {
       const filterContainer = document.getElementById('filter-options');
       filterContainer?.querySelectorAll('.filter-option-btn').forEach((btn) => {
-        const isActive = (btn as HTMLElement).getAttribute('data-filter') === this.currentFilter;
+        const isActive = this.activeFilters.includes((btn as HTMLElement).getAttribute('data-filter') || '');
         if (isActive) {
           btn.classList.remove('bg-white', 'border', 'border-black/10');
           btn.classList.add('bg-brand-primary', 'text-black');
@@ -314,7 +332,15 @@
         progress: 'Progres',
         payment: 'Plată'
       };
-      label.textContent = `${filterLabels[this.currentFilter] || 'Toți'} · ${sortLabels[this.currentSort] || 'Nume'}`;
+      let filterLabel = 'Toți';
+      if (!this.activeFilters.includes('all') && this.activeFilters.length > 0) {
+        if (this.activeFilters.length === 1) {
+          filterLabel = filterLabels[this.activeFilters[0]] || this.activeFilters[0];
+        } else {
+          filterLabel = `${this.activeFilters.length} filtre`;
+        }
+      }
+      label.textContent = `${filterLabel} · ${sortLabels[this.currentSort] || 'Nume'}`;
     }
 
     async deletePatient(id: string) {
@@ -371,38 +397,48 @@
 
       let patients: any[] = [];
       try {
-        let locationFilter: 'Belaqva' | 'Ghimbav' | undefined = undefined;
-        let achitatFilter: boolean | undefined = undefined;
+        const filtersActive = !this.activeFilters.includes('all') && this.activeFilters.length > 0;
 
-        if (this.currentFilter === 'ghimbav') locationFilter = 'Ghimbav';
-        else if (this.currentFilter === 'belaqva') locationFilter = 'Belaqva';
-        else if (this.currentFilter === 'unpaid') achitatFilter = false;
-        else if (this.currentFilter === 'paid') achitatFilter = true;
+        const activeLocations = filtersActive
+          ? this.activeFilters.filter((f: string) => f === 'belaqva' || f === 'ghimbav')
+          : [];
+        const activePayments = filtersActive
+          ? this.activeFilters.filter((f: string) => f === 'unpaid' || f === 'paid')
+          : [];
+        const expiredActive = filtersActive && this.activeFilters.includes('expired');
 
         patients = await getPatients({
-          locatie: locationFilter,
-          achitat: achitatFilter,
           search: this.currentSearchQuery || undefined
         });
 
-        // Filtru pentru categorii custom dacă utilizatorul a definit alte etichete
-        if (this.currentFilter.startsWith('custom:')) {
-          const customTerm = this.currentFilter.replace('custom:', '').toLowerCase().trim();
+        if (filtersActive) {
           patients = patients.filter((p: any) => {
-            const plan = (p.plan || '').toLowerCase();
             const loc = (p.locatie || '').toLowerCase();
-            const name = (p.name || '').toLowerCase();
-            const notes = (p.observatii || '').toLowerCase();
-            return plan.includes(customTerm) || loc.includes(customTerm) || name.includes(customTerm) || notes.includes(customTerm);
-          });
-        }
+            const locMatch =
+              activeLocations.length === 0 ||
+              activeLocations.some((f: string) => {
+                if (f === 'belaqva') return loc === 'belaqva' || loc === 'belaqua';
+                if (f === 'ghimbav') return loc === 'ghimbav';
+                return false;
+              });
 
-        // Filtru pacienți cu abonament expirat
-        if (this.currentFilter === 'expired') {
-          patients = patients.filter((p: any) => {
-            const total = p.sedinte_total || 0;
-            const used = p.sedinte_folosite || 0;
-            return total > 0 && used >= total;
+            let paymentMatch = true;
+            if (activePayments.length > 0) {
+              const suma = Number(p.suma_incasata || 0);
+              const cost = Number(p.cost || 0);
+              const isPaid = p.achitat || (cost > 0 && suma >= cost);
+              paymentMatch = activePayments.some((f: string) => {
+                if (f === 'paid') return isPaid;
+                if (f === 'unpaid') return !isPaid;
+                return false;
+              });
+            }
+
+            const expiredMatch =
+              !expiredActive ||
+              ((p.sedinte_total || 0) > 0 && (p.sedinte_folosite || 0) >= (p.sedinte_total || 0));
+
+            return locMatch && paymentMatch && expiredMatch;
           });
         }
 
