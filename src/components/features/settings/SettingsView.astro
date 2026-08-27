@@ -431,12 +431,14 @@ const currentSectionInfo = section && sectionTitles[section] ? sectionTitles[sec
             <div id="categories-container" class="flex flex-col gap-2.5 w-full">
               <!-- Preset standard category items (SSR pre-rendered) -->
               {['Belaqva', 'Ghimbav', 'Neachitați', 'Achitați'].map((cat) => (
-                <div data-category-chip={cat} class="flex items-center justify-between p-3.5 px-4 rounded-2xl bg-surface-base/60 hover:bg-surface-base border border-transparent transition-all animate-fadeIn w-full">
+                <div data-category-chip={cat} data-category-active="true" class="category-chip flex items-center justify-between p-3.5 px-4 rounded-2xl bg-surface-base/60 hover:bg-surface-base border border-transparent transition-all animate-fadeIn w-full">
                   <div class="flex items-center gap-3 min-w-0">
-                    <div class="w-2.5 h-2.5 rounded-full bg-brand-secondary shrink-0 shadow-sm shadow-brand-secondary/30"></div>
-                    <span class="text-text-main font-extrabold text-base tracking-tight truncate">{cat}</span>
+                    <div class="category-bullet w-2.5 h-2.5 rounded-full bg-brand-secondary shrink-0 shadow-sm shadow-brand-secondary/30 transition-colors"></div>
+                    <span class="category-name text-text-main font-extrabold text-base tracking-tight truncate">{cat}</span>
                   </div>
-                  <button type="button" data-delete-category class="w-7 h-7 rounded-full bg-surface-base hover:bg-brand-secondary hover:text-white text-text-muted font-bold text-xs flex items-center justify-center transition-all shrink-0 ml-2 cursor-pointer shadow-sm">&times;</button>
+                  <button type="button" data-toggle-category aria-label="Activează/dezactivează categoria" class="category-toggle w-12 h-7 rounded-full p-1 bg-brand-secondary shrink-0 ml-2 cursor-pointer shadow-sm flex items-center transition-colors">
+                    <span class="category-toggle-dot w-5 h-5 rounded-full bg-white shadow-sm transform translate-x-5 transition-transform"></span>
+                  </button>
                 </div>
               ))}
             </div>
@@ -825,36 +827,74 @@ const currentSectionInfo = section && sectionTitles[section] ? sectionTitles[sec
     const btnConfirmAddCategory = document.getElementById('btn-confirm-add-category');
     const newCategoryNameInput = document.getElementById('new-category-name') as HTMLInputElement | null;
 
-    function renderCategory(catName: string) {
+    function setCategoryActive(itemDiv: HTMLElement, active: boolean) {
+      itemDiv.setAttribute('data-category-active', active ? 'true' : 'false');
+
+      const bullet = itemDiv.querySelector('.category-bullet') as HTMLElement | null;
+      const toggle = itemDiv.querySelector('.category-toggle') as HTMLElement | null;
+      const dot = itemDiv.querySelector('.category-toggle-dot') as HTMLElement | null;
+      const name = itemDiv.querySelector('.category-name') as HTMLElement | null;
+
+      if (active) {
+        itemDiv.classList.remove('opacity-50', 'bg-surface-base/30');
+        itemDiv.classList.add('bg-surface-base/60');
+        bullet?.classList.remove('bg-text-muted/30');
+        bullet?.classList.add('bg-brand-secondary');
+        toggle?.classList.remove('bg-black/10');
+        toggle?.classList.add('bg-brand-secondary');
+        dot?.classList.add('translate-x-5');
+        dot?.classList.remove('translate-x-0');
+        name?.classList.remove('text-text-muted');
+        name?.classList.add('text-text-main');
+      } else {
+        itemDiv.classList.add('opacity-50', 'bg-surface-base/30');
+        itemDiv.classList.remove('bg-surface-base/60');
+        bullet?.classList.add('bg-text-muted/30');
+        bullet?.classList.remove('bg-brand-secondary');
+        toggle?.classList.add('bg-black/10');
+        toggle?.classList.remove('bg-brand-secondary');
+        dot?.classList.remove('translate-x-5');
+        dot?.classList.add('translate-x-0');
+        name?.classList.add('text-text-muted');
+        name?.classList.remove('text-text-main');
+      }
+    }
+
+    function renderCategory(catName: string, isActive = true) {
       if (!categoriesContainer) return;
       const itemDiv = document.createElement('div');
       itemDiv.setAttribute('data-category-chip', catName);
-      itemDiv.className = 'flex items-center justify-between p-3.5 px-4 rounded-2xl bg-surface-base/60 hover:bg-surface-base border border-transparent transition-all animate-fadeIn w-full';
-      
+      itemDiv.className = 'category-chip flex items-center justify-between p-3.5 px-4 rounded-2xl bg-surface-base/60 hover:bg-surface-base border border-transparent transition-all animate-fadeIn w-full';
+
       const leftBox = document.createElement('div');
       leftBox.className = 'flex items-center gap-3 min-w-0';
 
       const bullet = document.createElement('div');
-      bullet.className = 'w-2.5 h-2.5 rounded-full bg-brand-secondary shrink-0 shadow-sm shadow-brand-secondary/30';
+      bullet.className = 'category-bullet w-2.5 h-2.5 rounded-full bg-brand-secondary shrink-0 shadow-sm shadow-brand-secondary/30 transition-colors';
 
       const span = document.createElement('span');
-      span.className = 'text-text-main font-extrabold text-base tracking-tight truncate';
+      span.className = 'category-name text-text-main font-extrabold text-base tracking-tight truncate';
       span.textContent = catName;
 
       leftBox.appendChild(bullet);
       leftBox.appendChild(span);
 
-      const delBtn = document.createElement('button');
-      delBtn.type = 'button';
-      delBtn.setAttribute('data-delete-category', '');
-      delBtn.className = 'w-7 h-7 rounded-full bg-surface-base hover:bg-brand-secondary hover:text-white text-text-muted font-bold text-xs flex items-center justify-center transition-all shrink-0 ml-2 cursor-pointer shadow-sm';
-      delBtn.innerHTML = '&times;';
-      delBtn.addEventListener('click', () => itemDiv.remove());
+      const toggleBtn = document.createElement('button');
+      toggleBtn.type = 'button';
+      toggleBtn.setAttribute('data-toggle-category', '');
+      toggleBtn.setAttribute('aria-label', 'Activează/dezactivează categoria');
+      toggleBtn.className = 'category-toggle w-12 h-7 rounded-full p-1 bg-brand-secondary shrink-0 ml-2 cursor-pointer shadow-sm flex items-center transition-colors';
+      toggleBtn.innerHTML = '<span class="category-toggle-dot w-5 h-5 rounded-full bg-white shadow-sm transform translate-x-5 transition-transform"></span>';
+      toggleBtn.addEventListener('click', () => {
+        const currentlyActive = itemDiv.getAttribute('data-category-active') === 'true';
+        setCategoryActive(itemDiv, !currentlyActive);
+      });
 
       itemDiv.appendChild(leftBox);
-      itemDiv.appendChild(delBtn);
+      itemDiv.appendChild(toggleBtn);
 
       categoriesContainer.appendChild(itemDiv);
+      setCategoryActive(itemDiv, isActive);
     }
 
     if (categoriesContainer) {
@@ -879,7 +919,13 @@ const currentSectionInfo = section && sectionTitles[section] ? sectionTitles[sec
         catList = merged;
       }
 
-      catList.forEach(renderCategory);
+      const activeSet = new Set(
+        Array.isArray(settings.active_categories) && settings.active_categories.length > 0
+          ? settings.active_categories
+          : standards
+      );
+
+      catList.forEach((cat) => renderCategory(cat, activeSet.has(cat)));
     }
 
     btnConfirmAddCategory?.addEventListener('click', () => {
@@ -1288,8 +1334,20 @@ const currentSectionInfo = section && sectionTitles[section] ? sectionTitles[sec
 
         } else if (section === 'categories') {
           const catEls = document.querySelectorAll('[data-category-chip]');
-          const currentCats = Array.from(catEls).map(el => el.getAttribute('data-category-chip') || '').filter(Boolean);
-          savedSettings = await saveSettingsDB({ categories: currentCats });
+          const currentCats: string[] = [];
+          const activeCats: string[] = [];
+          catEls.forEach((el) => {
+            const name = el.getAttribute('data-category-chip') || '';
+            if (!name) return;
+            currentCats.push(name);
+            if (el.getAttribute('data-category-active') === 'true') {
+              activeCats.push(name);
+            }
+          });
+          savedSettings = await saveSettingsDB({
+            categories: currentCats,
+            active_categories: activeCats,
+          });
         }
 
         // Notifică toate componentele că settings s-au schimbat
