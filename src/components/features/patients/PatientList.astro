@@ -68,28 +68,28 @@
     </button>
 
     <!-- Dropdown Panel -->
-    <div id="patient-filter-sort-panel" class="absolute left-0 top-full mt-2 w-64 sm:w-72 bg-surface-card rounded-2xl p-4 shadow-xl border border-black/5 opacity-0 invisible scale-95 origin-top-left transition-all duration-200 z-50">
+    <div id="patient-filter-sort-panel" class="absolute left-0 top-full mt-2 w-72 sm:w-80 bg-surface-card rounded-2xl p-5 shadow-xl border border-black/5 opacity-0 invisible scale-95 origin-top-left transition-all duration-200 z-50">
       <!-- Filters -->
-      <div class="mb-4">
-        <h4 class="text-[10px] font-black uppercase tracking-wider text-text-muted mb-2">Filtre</h4>
-        <div id="filter-options" class="grid grid-cols-3 gap-1.5">
-          <button type="button" data-filter="all" class="filter-option-btn px-2 py-2 rounded-xl bg-brand-primary text-black font-extrabold text-xs text-center transition-all active:scale-95">Toți</button>
-          <button type="button" data-filter="belaqva" class="filter-option-btn px-2 py-2 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs text-center transition-all active:scale-95">Belaqva</button>
-          <button type="button" data-filter="ghimbav" class="filter-option-btn px-2 py-2 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs text-center transition-all active:scale-95">Ghimbav</button>
-          <button type="button" data-filter="unpaid" class="filter-option-btn px-2 py-2 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs text-center transition-all active:scale-95">Neachitați</button>
-          <button type="button" data-filter="paid" class="filter-option-btn px-2 py-2 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs text-center transition-all active:scale-95">Achitați</button>
-          <button type="button" data-filter="expired" class="filter-option-btn px-2 py-2 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs text-center transition-all active:scale-95">Expirați</button>
+      <div class="mb-5">
+        <h4 class="text-xs font-black uppercase tracking-wider text-text-muted mb-3">Filtre</h4>
+        <div id="filter-options" class="grid grid-cols-3 gap-2">
+          <button type="button" data-filter="all" class="filter-option-btn px-3 py-3 rounded-xl bg-brand-primary text-black font-extrabold text-sm text-center transition-all active:scale-95">Toți</button>
+          <button type="button" data-filter="belaqva" class="filter-option-btn px-3 py-3 rounded-xl bg-white text-black border border-black/10 font-extrabold text-sm text-center transition-all active:scale-95">Belaqva</button>
+          <button type="button" data-filter="ghimbav" class="filter-option-btn px-3 py-3 rounded-xl bg-white text-black border border-black/10 font-extrabold text-sm text-center transition-all active:scale-95">Ghimbav</button>
+          <button type="button" data-filter="unpaid" class="filter-option-btn px-3 py-3 rounded-xl bg-white text-black border border-black/10 font-extrabold text-sm text-center transition-all active:scale-95">Neachitați</button>
+          <button type="button" data-filter="paid" class="filter-option-btn px-3 py-3 rounded-xl bg-white text-black border border-black/10 font-extrabold text-sm text-center transition-all active:scale-95">Achitați</button>
+          <button type="button" data-filter="expired" class="filter-option-btn px-3 py-3 rounded-xl bg-white text-black border border-black/10 font-extrabold text-sm text-center transition-all active:scale-95">Expirați</button>
         </div>
       </div>
 
       <!-- Sort -->
       <div>
-        <h4 class="text-[10px] font-black uppercase tracking-wider text-text-muted mb-2">Sortare</h4>
-        <div id="sort-options" class="grid grid-cols-2 gap-1.5">
-          <button type="button" data-sort="name" class="sort-option-btn px-2 py-2 rounded-xl bg-brand-primary text-black font-extrabold text-xs text-center transition-all active:scale-95">Nume</button>
-          <button type="button" data-sort="expired" class="sort-option-btn px-2 py-2 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs text-center transition-all active:scale-95">Expirat</button>
-          <button type="button" data-sort="progress" class="sort-option-btn px-2 py-2 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs text-center transition-all active:scale-95">Progres</button>
-          <button type="button" data-sort="payment" class="sort-option-btn px-2 py-2 rounded-xl bg-white text-black border border-black/10 font-extrabold text-xs text-center transition-all active:scale-95">Plată</button>
+        <h4 class="text-xs font-black uppercase tracking-wider text-text-muted mb-3">Sortare</h4>
+        <div id="sort-options" class="grid grid-cols-2 gap-2">
+          <button type="button" data-sort="name" class="sort-option-btn px-3 py-3 rounded-xl bg-brand-primary text-black font-extrabold text-sm text-center transition-all active:scale-95">Nume</button>
+          <button type="button" data-sort="expired" class="sort-option-btn px-3 py-3 rounded-xl bg-white text-black border border-black/10 font-extrabold text-sm text-center transition-all active:scale-95">Expirat</button>
+          <button type="button" data-sort="progress" class="sort-option-btn px-3 py-3 rounded-xl bg-white text-black border border-black/10 font-extrabold text-sm text-center transition-all active:scale-95">Progres</button>
+          <button type="button" data-sort="payment" class="sort-option-btn px-3 py-3 rounded-xl bg-white text-black border border-black/10 font-extrabold text-sm text-center transition-all active:scale-95">Plată</button>
         </div>
       </div>
     </div>
