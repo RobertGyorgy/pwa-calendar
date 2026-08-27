@@ -502,8 +502,8 @@ export async function exportPatientsCSV(): Promise<string> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Trebuie să fii autentificat pentru export.');
 
-  // 1. Preluăm pacienții reali ai userului curent din Supabase
-  const patients = await getPatients();
+  // 1. Preluăm DOAR pacienții activi ai userului curent (nu cei inactivi sau vechi)
+  const patients = await getPatients({ inactivi: false });
   
   // 2. Preluăm doar programările curente ale userului (excluzând pacienții șterși sau date vechi din alte conturi)
   const { data: programari } = await (supabase as any)
