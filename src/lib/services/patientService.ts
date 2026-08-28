@@ -564,7 +564,6 @@ export async function exportPatientsCSV(): Promise<string> {
     }
     return clean;
   };
->>>>>>> 79a8322ae29c57ae2cb469dfdd6c4e388e879771
 
   const rows: string[][] = [];
 
