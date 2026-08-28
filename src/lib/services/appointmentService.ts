@@ -278,7 +278,6 @@ export async function getPendingWrapUps(): Promise<PendingWrapUp[]> {
   const now = new Date();
   const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
-  const user = await getCurrentUser();
 
   const { data, error } = await (supabase as any)
     .from('programari')
@@ -289,7 +288,6 @@ export async function getPendingWrapUps(): Promise<PendingWrapUp[]> {
     .eq('user_id', user.id)
     .eq('status', 'programat')
     .lte('data', todayStr)
-    .eq('user_id', user.id)
     .order('data', { ascending: true })
     .order('ora',  { ascending: true });
 
