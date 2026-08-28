@@ -167,39 +167,7 @@
       await this.loadUpcomingSessions();
     }
 
-    private formatDayAndMonth(dateStr: string): string {
-      const d = parseLocalDate(dateStr);
-      const dayNames = ['Duminică', 'Luni', 'Marți', 'Miercuri', 'Joi', 'Vineri', 'Sâmbătă'];
-      const monthNames = ['Ian', 'Feb', 'Mar', 'Apr', 'Mai', 'Iun', 'Iul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
-      
-      const dayName = dayNames[d.getDay()];
-      const dayNum = d.getDate();
-      const monthName = monthNames[d.getMonth()];
 
-      return `${dayName}, ${dayNum} ${monthName}`;
-    }
-
-    private formatDateForMessage(dateStr: string): string {
-      const dayNames = ['DUMINICĂ', 'LUNI', 'MARȚI', 'MIERCURI', 'JOI', 'VINERI', 'SÂMBĂTĂ'];
-      const monthNames = [
-        'ianuarie', 'februarie', 'martie', 'aprilie', 'mai', 'iunie',
-        'iulie', 'august', 'septembrie', 'octombrie', 'noiembrie', 'decembrie'
-      ];
-      
-      const d = parseLocalDate(dateStr);
-      const dayName = dayNames[d.getDay()];
-      const dayNum = d.getDate();
-      const monthName = monthNames[d.getMonth()];
-
-      return `${dayName}, ${dayNum} ${monthName}`;
-    }
-
-    private formatTimeClean(timeStr: string): string {
-      if (!timeStr) return '';
-      // "07:45:00" -> "7:45" sau "10:00:00" -> "10:00"
-      const clean = timeStr.slice(0, 5);
-      return clean.replace(/^0/, '');
-    }
 
     async loadUpcomingSessions() {
       if (!this.currentPatientId) return;
