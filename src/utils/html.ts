@@ -31,19 +31,3 @@ export function isAllowedUrl(url: string | undefined | null): boolean {
     return false;
   }
 }
-
-/**
- * Validate that a URL uses an allowed scheme for user-controlled links.
- * Allowed schemes: http:, https:, tel:.
- */
-export function isAllowedUrl(url: string | undefined | null): boolean {
-  if (!url || url === '#' || url === 'javascript:void(0)') return false;
-  const trimmed = String(url).trim();
-  if (/^tel:/i.test(trimmed)) return true;
-  try {
-    const parsed = new URL(trimmed);
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
