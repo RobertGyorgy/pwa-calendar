@@ -760,3 +760,20 @@ export const Constants = {
     Enums: {},
   },
 } as const
+// ── Shorthand helper types ──────────────────────────────────────
+export type Profile          = Database['public']['Tables']['profiles']['Row'];
+export type Settings         = Database['public']['Tables']['settings']['Row'];
+export type Pacient          = Database['public']['Tables']['pacienti']['Row'];
+export type PacientInsert    = Database['public']['Tables']['pacienti']['Insert'];
+export type PacientUpdate    = Database['public']['Tables']['pacienti']['Update'];
+export type Programare       = Database['public']['Tables']['programari']['Row'];
+export type ProgramareInsert = Database['public']['Tables']['programari']['Insert'];
+export type Notificare       = Database['public']['Tables']['notificari']['Row'];
+export type IstoricSaptamanal = Database['public']['Tables']['istoric_saptamanal']['Row'];
+export type PacientView      = Database['public']['Views']['pacienti_view']['Row'];
+export type Plata            = Database['public']['Tables']['plati']['Row'];
+export type PlataInsert      = Database['public']['Tables']['plati']['Insert'];
+export type ErrorLog         = Database['public']['Tables']['error_logs']['Row'];
+export type ErrorLogInsert   = Database['public']['Tables']['error_logs']['Insert'];
+export type PricingPackage   = Database['public']['Tables']['pricing_packages']['Row'];
+export type PricingPackageInsert = Database['public']['Tables']['pricing_packages']['Insert'];
