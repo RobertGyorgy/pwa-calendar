@@ -278,9 +278,7 @@
         const sessionLines = this.upcomingAppointments.map((item) => {
           const dateFormatted = this.formatDateForMessage(item.data);
           const timeClean = this.formatTimeClean(item.ora);
-          const loc = item.locatie || item.pacienti?.locatie || this.currentPatientLocation;
-          const locationText = loc ? ` (${loc})` : '';
-          return `${dateFormatted} – ora ${timeClean}${locationText}`;
+          return `${dateFormatted} – ora ${timeClean}`;
         });
 
         const msg = `Bună ziua!\nVă transmit următoarele dumneavoastră programări:\n${sessionLines.join('\n')}\n\nVă mulțumesc!`;
@@ -630,6 +628,35 @@
           this.currentPatientId = null;
         }
       }, 500);
+    }
+
+    private formatDateForMessage(dateStr: string): string {
+      if (!dateStr) return '';
+      const d = parseLocalDate(dateStr);
+
+      const daysUpper = ['DUMINICĂ', 'LUNI', 'MARȚI', 'MIERCURI', 'JOI', 'VINERI', 'SÂMBĂTĂ'];
+      const monthsLower = [
+        'ianuarie', 'februarie', 'martie', 'aprilie', 'mai', 'iunie',
+        'iulie', 'august', 'septembrie', 'octombrie', 'noiembrie', 'decembrie'
+      ];
+
+      const dayOfWeek = daysUpper[d.getDay()];
+      const dayNum = d.getDate();
+      const monthName = monthsLower[d.getMonth()];
+
+      return `${dayOfWeek}, ${dayNum} ${monthName}`;
+    }
+
+    private formatTimeClean(timeStr: string): string {
+      if (!timeStr) return '8:00';
+      const parts = timeStr.substring(0, 5).split(':');
+      const h = parseInt(parts[0] || '8', 10);
+      const m = parts[1] || '00';
+      return `${h}:${m}`;
+    }
+
+    private formatDayAndMonth(dateStr: string): string {
+      return this.formatDateForMessage(dateStr);
     }
   }
 
