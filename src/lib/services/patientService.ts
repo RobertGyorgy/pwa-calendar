@@ -564,7 +564,6 @@ export async function exportPatientsCSV(): Promise<string> {
     }
     return clean;
   };
->>>>>>> modificari-27.08
 
   const rows: string[][] = [];
 

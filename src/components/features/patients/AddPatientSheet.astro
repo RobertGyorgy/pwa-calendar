@@ -669,7 +669,7 @@
           if (stickyRenewBtn) {
             stickyRenewBtn.classList.remove('hidden');
             stickyRenewBtn.onclick = () => {
-              window.renewSubscription(patient.id, sessions || 10, patient.name);
+              (window as any).renewSubscription(patient.id, sessions || 10, patient.name);
             };
           }
           
