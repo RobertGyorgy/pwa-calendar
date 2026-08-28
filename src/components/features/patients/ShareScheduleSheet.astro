@@ -213,7 +213,7 @@
         const todayStr = toLocalISOString(new Date());
 
         // Fetch latest patient details directly from Supabase
-        const { data: patientData, error: patientError } = await supabase
+        const { data: patientData, error: patientError } = await (supabase as any)
           .from('pacienti')
           .select('id, nume, prenume, telefon, locatie')
           .eq('id', this.currentPatientId)

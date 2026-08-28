@@ -18,8 +18,8 @@ Astro.response.headers.set('Cache-Control', 'private, max-age=30, must-revalidat
     <AddEventBanner variant="session" />
     
     <!-- Timeline View -->
-    <section class="mt-6">
-      <h3 class="text-xl font-extrabold text-black tracking-tight mb-4 px-2">Timeline</h3>
+    <div class="mt-6 md:mt-0">
+      <h3 class="text-xl font-extrabold text-black tracking-tight mb-4 px-2">Programări</h3>
 
       <div id="timeline-slots-container" class="flex flex-col gap-3">
         <!-- Rendered dynamically by JS -->
@@ -365,7 +365,8 @@ Astro.response.headers.set('Cache-Control', 'private, max-age=30, must-revalidat
       }
       
       const count = session.attendanceCount ?? 0;
-      const totalSess = session.totalSessions || 10;
+      // ✅ FIX: fallback la 1 (nu 10) pentru Şdință unică
+      const totalSess = session.totalSessions || 1;
       const isTerminat = session.subscriptionDone || (totalSess > 0 && count > 0 && count >= totalSess);
       const displayCount = isTerminat ? totalSess : count;
       const progressPercentage = isTerminat ? 100 : (totalSess > 0 ? Math.min(100, Math.round((count / totalSess) * 100)) : 0);
@@ -737,7 +738,8 @@ Astro.response.headers.set('Cache-Control', 'private, max-age=30, must-revalidat
           const sumaIncasata = await getPatientPayments(a.pacient_id);
           const costTotal = Number(a.pacienti?.cost || 0);
           const folosite = a.pacienti?.sedinte_folosite ?? 0;
-          const totalSess = a.pacienti?.sedinte_total || 10;
+          // ✅ FIX: fallback la 1 (nu 10) pentru Şdință unică
+          const totalSess = a.pacienti?.sedinte_total || 1;
           const sedinteRamase = Math.max(0, totalSess - folosite);
           const costPerSession = totalSess > 0 ? (costTotal / totalSess) : costTotal;
           const sedintePlatite = costPerSession > 0 ? Math.floor(sumaIncasata / costPerSession) : 0;

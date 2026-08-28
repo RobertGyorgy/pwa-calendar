@@ -116,7 +116,7 @@ export async function addPatient(input: {
   const nume    = parts.slice(1).join(' '); // Rămâne gol dacă este un singur cuvânt, NU se duplică prenumele
 
   // Verificare nume duplicat (inclusiv inversat, ex. "Popa Diana" vs "Diana Popa")
-  const { data: existing } = await supabase
+  const { data: existing } = await (supabase as any)
     .from('pacienti_view')
     .select('id, name')
     .or(`name.ilike.${nameTrimmed},name.ilike.${nameReversed}`);
@@ -165,7 +165,7 @@ export async function updatePatient(id: string, updates: PacientUpdate & { name?
     const nameReversed = nameTrimmed.split(/\s+/).reverse().join(' ');
     
     // Check duplicate name on edit (excluding current patient id, but checking both normal and reversed)
-    const { data: existing } = await supabase
+    const { data: existing } = await (supabase as any)
       .from('pacienti_view')
       .select('id, name')
       .neq('id', id)
@@ -245,21 +245,21 @@ export async function resetPatientSubscription(
   paymentOption: { status: 'Neachitat' | 'Parțial' | 'Achitat'; paidAmount?: number } | boolean = false
 ): Promise<void> {
   const current = await getPatient(id);
+  // ✅ FIX: costul noului abonament ÎNLOCUIEȘTE costul vechi, nu se acumulează
   const nextTotal = newTotalSessions ?? (current.sedinte_total || 10);
-  // Reînnoirea înseamnă un pachet nou: costul devine cel al noului pachet.
-  const nextCost = newCostTotal;
+  const nextCost = newCostTotal > 0 ? newCostTotal : (current.cost || 0);
 
   let isAchitat = false;
   let amountToAdd = 0;
 
   if (typeof paymentOption === 'boolean') {
     if (paymentOption) {
-      amountToAdd = newCostTotal;
+      amountToAdd = nextCost;
       isAchitat = true;
     }
   } else if (paymentOption) {
     if (paymentOption.status === 'Achitat') {
-      amountToAdd = newCostTotal;
+      amountToAdd = nextCost;
       isAchitat = true;
     } else if (paymentOption.status === 'Parțial') {
       amountToAdd = paymentOption.paidAmount || 0;
@@ -269,6 +269,14 @@ export async function resetPatientSubscription(
 
   // Reînnoirea înseamnă un pachet nou: resetăm contorul de ședințe folosite la 0
   // și setăm noul total. Istoricul programărilor rămâne în DB.
+  // ✅ FIX: ștergem și plățile vechi la reînnoire (abonament nou = calcule noi)
+  try {
+    await (supabase as any).from('plati').delete().eq('pacient_id', id);
+  } catch (e) { console.warn('Eroare ștergere plăți la reînnoire:', e); }
+  if (typeof window !== 'undefined') {
+    try { localStorage.removeItem(`kineto_plati_${id}`); } catch (e) {}
+  }
+
   const { error } = await (supabase as any)
     .from('pacienti')
     .update({
@@ -489,20 +497,74 @@ export async function deletePatient(id: string) {
 
 // ── Export CSV complet — pacienți + agendă programări ─────────────
 export async function exportPatientsCSV(): Promise<string> {
-  // 1. Preluăm pacienții reali din Supabase
-  const patients = await getPatients();
-  const user = await getCurrentUser();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Trebuie să fii autentificat pentru export.');
 
-  // 2. Preluăm toate programările reale din Supabase
-  const { data: programari } = await supabase
-    .from('programari')
-    .select(`
-      data, ora, locatie, status, note, motiv,
-      pacienti ( prenume, nume, telefon )
-    `)
-    .eq('user_id', user.id)
-    .order('data', { ascending: false })
-    .order('ora', { ascending: true });
+  // 1. Preluăm pacienții direct din tabela `pacienti` (asigură citirea tuturor câmpurilor inclusiv telefon)
+  let patients: any[] = [];
+  try {
+    // Citim TOȚI pacienții utilizatorului (fara filtru pe inactiv) ca sa nu pierdem date
+    const { data: rawPatients, error: pErr } = await (supabase as any)
+      .from('pacienti')
+      .select('id, prenume, nume, telefon, locatie, plan, cost, sedinte_total, sedinte_folosite, achitat, status_abonament, user_id')
+      .eq('user_id', user.id)
+      .order('prenume', { ascending: true });
+
+    if (pErr) {
+      console.error('[EXPORT] Eroare citire pacienti:', pErr);
+    }
+
+    if (!pErr && rawPatients) {
+      patients = rawPatients.map((p: any) => ({
+        ...p,
+        name: (!p.nume || p.prenume === p.nume) ? (p.prenume || 'Pacient') : `${p.prenume} ${p.nume}`.trim(),
+        // Luam telefonul ca atare — fara fallback la '' ca sa vedem valoarea reala
+        telefon: p.telefon
+      }));
+    }
+  } catch (e) {
+    console.warn('Eroare citire directă pacienți:', e);
+  }
+
+  // Fallback prin getPatients dacă tabela directă nu a returnat
+  if (patients.length === 0) {
+    const fallbackPatients = await getPatients({ inactivi: false });
+    patients = fallbackPatients.map((p: any) => ({
+      ...p,
+      telefon: p.telefon
+    }));
+  }
+
+  // Creăm o hartă ID -> Pacient pentru căutare rapidă și corelare la programări
+  const patientMap = new Map<string, any>(patients.map(p => [p.id, p]));
+
+  // 2. Preluăm programările utilizatorului curent
+  let programari: any[] = [];
+  try {
+    const { data: rawAppts, error: apptErr } = await (supabase as any)
+      .from('programari')
+      .select('data, ora, locatie, status, note, motiv, pacient_id')
+      .eq('user_id', user.id)
+      .order('data', { ascending: false })
+      .order('ora', { ascending: true });
+
+    if (!apptErr && rawAppts) {
+      programari = rawAppts;
+    }
+  } catch (e) {
+    console.warn('Eroare citire programări pentru export:', e);
+  }
+
+  const formatPhone = (tel: string | undefined | null) => {
+    if (!tel || !tel.trim()) return '-';
+    const clean = tel.trim();
+    // Previne interpretarea prefixului '+' ca formulă greșită în Excel
+    if (clean.startsWith('+')) {
+      return `'${clean}`;
+    }
+    return clean;
+  };
+>>>>>>> modificari-27.08
 
   const rows: string[][] = [];
 
@@ -511,16 +573,22 @@ export async function exportPatientsCSV(): Promise<string> {
   rows.push(['Nume Complet', 'Telefon', 'Locatie', 'Plan', 'Cost (RON)', 'Sedinte Total', 'Sedinte Folosite', 'Sedinte Ramase', 'Achitat', 'Status Abonament']);
 
   patients.forEach(p => {
+    const costVal = Number(p.cost || 0);
+    const totalSess = Number(p.sedinte_total || 0);
+    const usedSess = Number(p.sedinte_folosite || 0);
+    const remSess = Math.max(0, totalSess - usedSess);
+    const isPaid = p.achitat === true;
+
     rows.push([
-      p.name,
-      p.telefon || '-',
+      p.name || 'Pacient',
+      formatPhone(p.telefon),
       p.locatie || '-',
       p.plan || '-',
-      (p.cost || 0).toString(),
-      (p.sedinte_total || 0).toString(),
-      (p.sedinte_folosite || 0).toString(),
-      (p.sedinte_ramase || 0).toString(),
-      p.achitat ? 'Da' : 'Nu',
+      costVal.toString(),
+      totalSess.toString(),
+      usedSess.toString(),
+      remSess.toString(),
+      isPaid ? 'Da' : 'Nu',
       p.status_abonament || '-'
     ]);
   });
@@ -531,15 +599,20 @@ export async function exportPatientsCSV(): Promise<string> {
   rows.push(['=== AGENDA ȘEDINȚE / PROGRAMĂRI ===']);
   rows.push(['Data', 'Ora', 'Pacient', 'Telefon', 'Locatie', 'Status Ședință', 'Note / Observații', 'Motiv Anulare/Absență']);
 
-  (programari || []).forEach((pr: any) => {
-    const pacientName = pr.pacienti ? (pr.pacienti.prenume === pr.pacienti.nume || !pr.pacienti.nume ? pr.pacienti.prenume : `${pr.pacienti.prenume} ${pr.pacienti.nume}`.trim()) : 'Pacient Necunoscut';
-    const telefon = pr.pacienti?.telefon || '-';
+  programari.forEach((pr: any) => {
+    const p = patientMap.get(pr.pacient_id);
+    // Dacă pacientul nu mai există în lista activă, sărim
+    if (!p) return;
+
+    const pacientName = p.name || `${p.prenume || ''} ${p.nume || ''}`.trim() || 'Pacient';
+    const telefon = formatPhone(p.telefon);
+
     rows.push([
-      pr.data,
-      pr.ora,
+      pr.data || '-',
+      pr.ora ? pr.ora.substring(0, 5) : '-',
       pacientName,
       telefon,
-      pr.locatie || '-',
+      pr.locatie || p.locatie || '-',
       pr.status || '-',
       pr.note || '-',
       pr.motiv || '-'
